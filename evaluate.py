@@ -120,11 +120,14 @@ def evaluate(preds, gt):
         for actual in labels
     }
 
-    # Per-claim results
-    per_claim = [
-        {"claim_id": m["claim_id"], "predicted": m["predicted"], "actual": m["actual"],
-         "correct": m["predicted"] == m["actual"]}
-        for m in matched
+    # Per-claim results split by correctness
+    correct_claims = [
+        {"claim_id": m["claim_id"], "predicted": m["predicted"], "actual": m["actual"]}
+        for m in matched if m["predicted"] == m["actual"]
+    ]
+    wrong_claims = [
+        {"claim_id": m["claim_id"], "predicted": m["predicted"], "actual": m["actual"]}
+        for m in matched if m["predicted"] != m["actual"]
     ]
 
     results = {
@@ -139,7 +142,8 @@ def evaluate(preds, gt):
         "per_category": compute_breakdown(matched, "category"),
         "per_database": compute_breakdown(matched, "db_name"),
         "confusion_matrix": confusion_matrix,
-        "per_claim": per_claim,
+        "correct": correct_claims,
+        "wrong": wrong_claims,
     }
 
     # Print summary
