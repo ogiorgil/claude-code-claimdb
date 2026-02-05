@@ -26,10 +26,12 @@ DATABASE: {db_path}
 Use sqlite3 CLI to query: sqlite3 "{db_path}" "SELECT ..."
 
 WORKFLOW:
-1. Explore the database schema: sqlite3 "{db_path}" ".tables" and ".schema table_name"
-2. Understand which tables and columns are relevant to the claim
-3. Write and execute SQL queries to check the facts stated in the claim
-4. Compare query results against what the claim asserts
+1. First, READ THE CLAIM CAREFULLY before touching the database. Check whether
+   the claim can even be verified from a database (see NOT ENOUGH INFO rules below).
+2. Explore the database schema: sqlite3 "{db_path}" ".tables" and ".schema table_name"
+3. Check if the claim references concepts, attributes, or entities that exist in the schema.
+4. If the claim is verifiable, write and execute SQL queries to check the facts.
+5. Compare query results against what the claim asserts.
 
 CLASSIFICATION:
 - ENTAILED: The data in the database fully supports the claim. Every factual
@@ -37,13 +39,28 @@ CLASSIFICATION:
 - CONTRADICTED: The data in the database directly contradicts the claim.
   At least one factual assertion in the claim is wrong according to the data.
 - NOT ENOUGH INFO: The database does not contain sufficient information to
-  verify or refute the claim (e.g., the claim references data not in the
-  schema, requires external knowledge, or involves subjective judgment).
+  verify or refute the claim. This includes THREE specific categories:
+
+  1. OUT-OF-SCHEMA: The claim references concepts, attributes, or entities that
+     do not exist anywhere in the database schema. For example, a claim about
+     "homeschooling rates" against a schools database that has no homeschooling data.
+
+  2. COUNTERFACTUAL: The claim describes a hypothetical "what if" scenario.
+     Look for language like "If X had happened...", "Had X been done...",
+     "If X were changed...", "Would have...", etc. These imagined scenarios
+     CANNOT be verified from a database that only records what actually happened.
+     ALWAYS classify counterfactual claims as NOT ENOUGH INFO.
+
+  3. SUBJECTIVE: The claim expresses opinions, value judgments, or qualitative
+     assessments that cannot be objectively verified from data. For example,
+     "City X provides the most nurturing learning environment" or
+     "Player Y is the greatest of all time."
 
 IMPORTANT NOTES:
 - Be precise with numbers. If a claim says "42" but the data shows "43", that is CONTRADICTED.
-- For counterfactual claims ("If X had happened, then Y"), reason about what the
-  data would look like under the hypothetical scenario, then check if Y holds.
+- NEVER try to "compute" an answer for a counterfactual claim. The correct label
+  is always NOT ENOUGH INFO, because the database records what happened, not what
+  would have happened under hypothetical changes.
 - If the claim references columns or concepts not present in the database, classify as NOT ENOUGH INFO.
 
 OUTPUT FORMAT (must be the LAST thing you write):
@@ -64,14 +81,37 @@ Remember to output your final answer in the required JSON format at the end.
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run ClaimDB benchmark with Claude Code")
+    parser = argparse.ArgumentParser(
+        description="Run ClaimDB benchmark with Claude Code"
+    )
     parser.add_argument("--input", required=True, help="Path to claims JSONL file")
-    parser.add_argument("--db-dir", required=True, help="Path to directory with SQLite databases")
-    parser.add_argument("--output-dir", default="results", help="Output directory (default: results)")
-    parser.add_argument("--model", default="opus", help="Claude Code model alias (default: opus)")
-    parser.add_argument("--timeout", type=int, default=600, help="Timeout per claim in seconds (default: 600)")
-    parser.add_argument("--start-index", type=int, default=0, help="Start index in claims list (default: 0)")
-    parser.add_argument("--end-index", type=int, default=-1, help="End index in claims list, -1 for all (default: -1)")
+    parser.add_argument(
+        "--db-dir", required=True, help="Path to directory with SQLite databases"
+    )
+    parser.add_argument(
+        "--output-dir", default="results", help="Output directory (default: results)"
+    )
+    parser.add_argument(
+        "--model", default="opus", help="Claude Code model alias (default: opus)"
+    )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=600,
+        help="Timeout per claim in seconds (default: 600)",
+    )
+    parser.add_argument(
+        "--start-index",
+        type=int,
+        default=0,
+        help="Start index in claims list (default: 0)",
+    )
+    parser.add_argument(
+        "--end-index",
+        type=int,
+        default=-1,
+        help="End index in claims list, -1 for all (default: -1)",
+    )
     return parser.parse_args()
 
 
@@ -87,12 +127,9 @@ def load_claims(input_path, start_index, end_index):
     return claims[start_index:end_index]
 
 
-def setup_output_dir(output_dir, input_path, model):
-    """Set up output directory based on input file + model for automatic resume."""
-    base_path = Path(output_dir)
-    input_stem = Path(input_path).stem  # e.g. "test-public"
-    output_path = base_path / f"{input_stem}_{model}"
-
+def setup_output_dir(output_dir):
+    """Set up output directory. User is responsible for choosing a unique path."""
+    output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     if (output_path / "predictions.jsonl").exists():
         print(f"Resuming in: {output_path}")
@@ -163,9 +200,12 @@ def invoke_claude(prompt, system_prompt, model, timeout, working_dir):
         "claude",
         "--print",
         "--verbose",
-        "--output-format", "stream-json",
-        "--model", model,
-        "--system-prompt", system_prompt,
+        "--output-format",
+        "stream-json",
+        "--model",
+        model,
+        "--system-prompt",
+        system_prompt,
         "--dangerously-skip-permissions",
         prompt,
     ]
@@ -357,7 +397,7 @@ def main():
     claims = load_claims(args.input, args.start_index, args.end_index)
     print(f"Loaded {len(claims)} claims from {args.input}")
 
-    output_dir = setup_output_dir(args.output_dir, args.input, args.model)
+    output_dir = setup_output_dir(args.output_dir)
     done_ids = load_completed_ids(output_dir)
     save_run_config(output_dir, args)
 
@@ -365,35 +405,45 @@ def main():
     completed = len(done_ids)
     errors = 0
 
-    for i, claim in enumerate(claims):
-        if claim["claim_id"] in done_ids:
-            continue
+    try:
+        for i, claim in enumerate(claims):
+            if claim["claim_id"] in done_ids:
+                continue
 
-        remaining = len(claims) - completed
-        print(f"\n[{completed + 1}/{len(claims)}] Claim {claim['claim_id']} "
-              f"(db: {claim['db_name']}, remaining: {remaining})")
+            remaining = len(claims) - completed
+            print(
+                f"\n[{completed + 1}/{len(claims)}] Claim {claim['claim_id']} "
+                f"(db: {claim['db_name']}, remaining: {remaining})"
+            )
 
-        result = process_claim(claim, args)
+            result = process_claim(claim, args)
 
-        append_prediction(output_dir, claim["claim_id"], result["predicted_label"])
-        append_detailed(output_dir, result)
+            append_prediction(output_dir, claim["claim_id"], result["predicted_label"])
+            append_detailed(output_dir, result)
 
-        cost = result["usage"].get("cost_usd", 0)
-        total_cost += cost
-        completed += 1
+            cost = result["usage"].get("cost_usd", 0)
+            total_cost += cost
+            completed += 1
 
-        if result["predicted_label"] == "PARSE_ERROR":
-            errors += 1
-            print(f"  -> PARSE_ERROR: {result['reasoning'][:100]}")
-        else:
-            print(f"  -> {result['predicted_label']} "
-                  f"({result['duration_seconds']:.1f}s, ${cost:.4f})")
+            if result["predicted_label"] == "PARSE_ERROR":
+                errors += 1
+                print(f"  -> PARSE_ERROR: {result['reasoning'][:100]}")
+            else:
+                print(
+                    f"  -> {result['predicted_label']} "
+                    f"({result['duration_seconds']:.1f}s, ${cost:.4f})"
+                )
+    except KeyboardInterrupt:
+        print(f"\n\nInterrupted! Progress saved — re-run to resume.")
 
+    predictions_path = output_dir / "predictions.jsonl"
     print(f"\n{'='*60}")
     print(f"Done! {completed}/{len(claims)} claims processed")
     print(f"Parse errors: {errors}")
     print(f"Total cost: ${total_cost:.4f}")
     print(f"Results saved to: {output_dir}")
+    print(f"\nTo evaluate:")
+    print(f"  python3 evaluate.py --predictions {predictions_path}")
 
 
 if __name__ == "__main__":
