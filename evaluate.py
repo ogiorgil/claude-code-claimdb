@@ -14,10 +14,12 @@ from pathlib import Path
 VALID_LABELS = {"ENTAILED", "CONTRADICTED", "NOT ENOUGH INFO"}
 
 
+GROUND_TRUTH_PATH = Path(__file__).parent / "test-public.jsonl"
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Evaluate ClaimDB predictions")
     parser.add_argument("--predictions", required=True, help="Path to predictions.jsonl")
-    parser.add_argument("--ground-truth", required=True, help="Path to ground-truth JSONL (test-public.jsonl)")
     return parser.parse_args()
 
 
@@ -66,6 +68,22 @@ def print_table(headers, rows, col_widths=None):
         print("".join(str(v).ljust(col_widths[i]) for i, v in enumerate(row)))
 
 
+def compute_breakdown(matched, key):
+    """Compute accuracy breakdown by a given key."""
+    values = sorted(set(m[key] for m in matched))
+    breakdown = {}
+    for val in values:
+        name = val if val else "(none)"
+        subset = [m for m in matched if m[key] == val]
+        correct = sum(1 for m in subset if m["predicted"] == m["actual"])
+        breakdown[name] = {
+            "count": len(subset),
+            "correct": correct,
+            "accuracy": round(100 * correct / len(subset), 1),
+        }
+    return breakdown
+
+
 def evaluate(preds, gt):
     # Match predictions to ground truth
     matched = []
@@ -86,87 +104,95 @@ def evaluate(preds, gt):
 
     if not matched:
         print("No matching claim_ids found between predictions and ground truth.")
-        return
+        return None
 
-    # Overall accuracy
     correct = sum(1 for m in matched if m["predicted"] == m["actual"])
     total = len(matched)
+    parse_errors = [m for m in matched if m["predicted"] not in VALID_LABELS]
+
+    # Confusion matrix
+    labels = sorted(VALID_LABELS)
+    confusion = Counter()
+    for m in matched:
+        confusion[(m["actual"], m["predicted"])] += 1
+    confusion_matrix = {
+        actual: {predicted: confusion.get((actual, predicted), 0) for predicted in labels}
+        for actual in labels
+    }
+
+    # Per-claim results
+    per_claim = [
+        {"claim_id": m["claim_id"], "predicted": m["predicted"], "actual": m["actual"],
+         "correct": m["predicted"] == m["actual"]}
+        for m in matched
+    ]
+
+    results = {
+        "overall": {
+            "total": total,
+            "correct": correct,
+            "accuracy": round(100 * correct / total, 1),
+            "parse_errors": len(parse_errors),
+            "missing_predictions": len(missing),
+        },
+        "per_label": compute_breakdown(matched, "actual"),
+        "per_category": compute_breakdown(matched, "category"),
+        "per_database": compute_breakdown(matched, "db_name"),
+        "confusion_matrix": confusion_matrix,
+        "per_claim": per_claim,
+    }
+
+    # Print summary
     print(f"\n{'='*60}")
-    print(f"OVERALL: {correct}/{total} correct ({100*correct/total:.1f}%)")
+    print(f"OVERALL: {correct}/{total} correct ({results['overall']['accuracy']}%)")
     print(f"{'='*60}")
 
     if missing:
         print(f"\nMissing predictions for {len(missing)} claims")
     if extra:
         print(f"Extra predictions not in ground truth: {len(extra)}")
-
-    # Parse errors
-    parse_errors = [m for m in matched if m["predicted"] not in VALID_LABELS]
     if parse_errors:
         print(f"Parse errors (invalid labels): {len(parse_errors)}")
 
-    # Per-label breakdown (confusion-style)
     print(f"\n--- Per Ground-Truth Label ---")
-    rows = []
-    for label in sorted(VALID_LABELS):
-        subset = [m for m in matched if m["actual"] == label]
-        if not subset:
-            continue
-        label_correct = sum(1 for m in subset if m["predicted"] == m["actual"])
-        acc = 100 * label_correct / len(subset) if subset else 0
-        rows.append((label, len(subset), label_correct, f"{acc:.1f}%"))
+    rows = [(k, v["count"], v["correct"], f"{v['accuracy']}%") for k, v in results["per_label"].items()]
     print_table(["Label", "Count", "Correct", "Accuracy"], rows)
 
-    # Per-category breakdown
-    categories = sorted(set(m["category"] for m in matched))
-    if any(c for c in categories):  # Only show if there are non-empty categories
+    categories = results["per_category"]
+    if any(k != "(none)" for k in categories):
         print(f"\n--- Per Category ---")
-        rows = []
-        for cat in categories:
-            cat_name = cat if cat else "(none)"
-            subset = [m for m in matched if m["category"] == cat]
-            cat_correct = sum(1 for m in subset if m["predicted"] == m["actual"])
-            acc = 100 * cat_correct / len(subset) if subset else 0
-            rows.append((cat_name, len(subset), cat_correct, f"{acc:.1f}%"))
+        rows = [(k, v["count"], v["correct"], f"{v['accuracy']}%") for k, v in categories.items()]
         print_table(["Category", "Count", "Correct", "Accuracy"], rows)
 
-    # Per-database breakdown
     print(f"\n--- Per Database ---")
-    rows = []
-    for db in sorted(set(m["db_name"] for m in matched)):
-        subset = [m for m in matched if m["db_name"] == db]
-        db_correct = sum(1 for m in subset if m["predicted"] == m["actual"])
-        acc = 100 * db_correct / len(subset) if subset else 0
-        rows.append((db, len(subset), db_correct, f"{acc:.1f}%"))
+    rows = [(k, v["count"], v["correct"], f"{v['accuracy']}%") for k, v in results["per_database"].items()]
     print_table(["Database", "Count", "Correct", "Accuracy"], rows)
 
-    # Confusion matrix
     print(f"\n--- Confusion Matrix (rows=actual, cols=predicted) ---")
-    labels = sorted(VALID_LABELS)
-    confusion = Counter()
-    for m in matched:
-        confusion[(m["actual"], m["predicted"])] += 1
-
     header = [""] + labels
-    rows = []
-    for actual in labels:
-        row = [actual]
-        for predicted in labels:
-            row.append(confusion.get((actual, predicted), 0))
-        rows.append(row)
+    rows = [[actual] + [confusion_matrix[actual][p] for p in labels] for actual in labels]
     print_table(header, rows)
+
+    return results
 
 
 def main():
     args = parse_args()
+    predictions_path = Path(args.predictions)
 
-    preds = load_predictions(args.predictions)
-    print(f"Loaded {len(preds)} predictions from {args.predictions}")
+    preds = load_predictions(predictions_path)
+    print(f"Loaded {len(preds)} predictions from {predictions_path}")
 
-    gt = load_ground_truth(args.ground_truth)
-    print(f"Loaded {len(gt)} ground-truth labels from {args.ground_truth}")
+    gt = load_ground_truth(GROUND_TRUTH_PATH)
+    print(f"Loaded {len(gt)} ground-truth labels from {GROUND_TRUTH_PATH}")
 
-    evaluate(preds, gt)
+    results = evaluate(preds, gt)
+
+    if results:
+        output_path = predictions_path.parent / "evaluate.json"
+        with open(output_path, "w") as f:
+            json.dump(results, f, indent=2)
+        print(f"\nSaved to: {output_path}")
 
 
 if __name__ == "__main__":
