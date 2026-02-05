@@ -139,8 +139,45 @@ def setup_output_dir(output_dir):
 
 
 def load_completed_ids(output_dir):
-    """Load claim_ids that have already been processed."""
+    """Load claim_ids that should be skipped.
+
+    If evaluate.json exists, only skip claims that were correct and rewrite
+    predictions.jsonl to remove wrong entries so they can be rerun.
+    Otherwise, skip all claims already in predictions.jsonl.
+    """
+    evaluate_file = output_dir / "evaluate.json"
     predictions_file = output_dir / "predictions.jsonl"
+
+    if evaluate_file.exists():
+        with open(evaluate_file) as f:
+            eval_data = json.load(f)
+        correct_ids = {c["claim_id"] for c in eval_data.get("correct", [])}
+        wrong_ids = {c["claim_id"] for c in eval_data.get("wrong", [])}
+        # Rewrite predictions.jsonl to only keep correct entries
+        if predictions_file.exists() and wrong_ids:
+            kept = []
+            with open(predictions_file) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        data = json.loads(line)
+                        if data["claim_id"] in correct_ids:
+                            kept.append(line)
+                    except (json.JSONDecodeError, KeyError):
+                        continue
+            with open(predictions_file, "w") as f:
+                f.write("\n".join(kept) + "\n" if kept else "")
+        # Remove stale evaluate.json since we're rerunning wrong claims
+        if wrong_ids:
+            evaluate_file.unlink()
+            print(f"Found {len(correct_ids)} correct, {len(wrong_ids)} wrong — rerunning wrong claims")
+        else:
+            print(f"All {len(correct_ids)} claims correct, nothing to rerun")
+        return correct_ids
+
+    # No evaluation yet — skip all previously completed claims
     done_ids = set()
     if predictions_file.exists():
         with open(predictions_file) as f:
@@ -181,17 +218,13 @@ def append_prediction(output_dir, claim_id, label):
         f.write(json.dumps({"claim_id": claim_id, "label": label}) + "\n")
 
 
-def append_detailed(output_dir, result):
-    """Append a detailed result to detailed_results.json (pretty-printed list)."""
-    detail_file = output_dir / "detailed_results.json"
-    if detail_file.exists():
-        with open(detail_file) as f:
-            results_list = json.load(f)
-    else:
-        results_list = []
-    results_list.append(result)
+def save_detailed(output_dir, result):
+    """Save a detailed result to its own JSON file."""
+    details_dir = output_dir / "details"
+    details_dir.mkdir(exist_ok=True)
+    detail_file = details_dir / f"{result['claim_id']}.json"
     with open(detail_file, "w") as f:
-        json.dump(results_list, f, indent=2)
+        json.dump(result, f, indent=2)
 
 
 def invoke_claude(prompt, system_prompt, model, timeout, working_dir):
@@ -419,7 +452,7 @@ def main():
             result = process_claim(claim, args)
 
             append_prediction(output_dir, claim["claim_id"], result["predicted_label"])
-            append_detailed(output_dir, result)
+            save_detailed(output_dir, result)
 
             cost = result["usage"].get("cost_usd", 0)
             total_cost += cost
