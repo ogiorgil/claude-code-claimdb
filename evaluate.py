@@ -221,6 +221,8 @@ def main():
     total_duration = 0
     total_input_tokens = 0
     total_output_tokens = 0
+    total_cache_read_tokens = 0
+    total_cache_creation_tokens = 0
     if details_dir.exists():
         for detail_file in details_dir.glob("*.json"):
             with open(detail_file) as f:
@@ -228,8 +230,15 @@ def main():
             usage = detail.get("usage", {})
             total_cost += usage.get("cost_usd", 0)
             total_duration += detail.get("duration_seconds", 0)
-            total_input_tokens += usage.get("input_tokens", 0)
-            total_output_tokens += usage.get("output_tokens", 0)
+            input_tokens = usage.get("input_tokens", 0)
+            cache_read_tokens = usage.get("cache_read_tokens", 0)
+            cache_creation_tokens = usage.get("cache_creation_tokens", 0)
+            output_tokens = usage.get("output_tokens", 0)
+
+            total_input_tokens += input_tokens + cache_read_tokens + cache_creation_tokens
+            total_output_tokens += output_tokens
+            total_cache_read_tokens += cache_read_tokens
+            total_cache_creation_tokens += cache_creation_tokens
 
     results = evaluate(preds, gt)
 
@@ -240,11 +249,15 @@ def main():
         "total_input_tokens": total_input_tokens,
         "total_output_tokens": total_output_tokens,
         "total_tokens": total_input_tokens + total_output_tokens,
+        "cache_read_tokens": total_cache_read_tokens,
+        "cache_creation_tokens": total_cache_creation_tokens,
     }
     print(f"\n--- Cost ---")
     print(f"Total cost: ${total_cost:.4f}")
-    print(f"Total tokens: {total_input_tokens + total_output_tokens} "
-          f"(input {total_input_tokens}, output {total_output_tokens})")
+    print(f"Total input tokens: {total_input_tokens} "
+          f"(cache read {total_cache_read_tokens}, cache creation {total_cache_creation_tokens})")
+    print(f"Total output tokens: {total_output_tokens}")
+    print(f"Total tokens: {total_input_tokens + total_output_tokens}")
     print(f"Total duration: {total_duration:.0f}s ({total_duration/3600:.1f}h)")
     print(f"Avg per claim: {total_duration/len(preds):.1f}s" if preds else "")
 
