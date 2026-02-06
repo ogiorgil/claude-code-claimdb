@@ -1,6 +1,6 @@
 # Claude Code on ClaimDB
 
-Run the ClaimDB benchmark with the Claude Code CLI, then evaluate and analyze results.
+Run the [ClaimDB benchmark](https://claimdb.github.io/) with the Claude Code CLI, then evaluate and analyze results.
 
 **Overview**
 - `run_claimdb.py` runs the benchmark and saves predictions plus full per-claim traces.
