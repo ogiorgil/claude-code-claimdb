@@ -1,0 +1,578 @@
+{
+  "claim_id": 16375,
+  "db_name": "debit_card_specializing",
+  "claim": "None of the 933 Czech gas station transactions recorded after 2012-01-01 were made using contactless (NFC) cards.",
+  "extra_info": "Czech Republic can be represented as the Country value in the gasstations table is 'CZE'",
+  "predicted_label": "NOT ENOUGH INFO",
+  "reasoning": "The database does not contain any column or attribute that records whether a transaction was made using a contactless (NFC) card versus another payment method. While the count of 933 Czech gas station transactions after 2012-01-01 is confirmed correct, the claim about the payment method (contactless/NFC) cannot be verified because this concept is out-of-schema \u2014 no table tracks card type or payment technology.",
+  "messages": [
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_018qbUWKAoW9SAqQZHwM4PFa",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "\n\nI'll start by exploring the database schema to understand what tables and columns are available."
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 3,
+          "cache_creation_input_tokens": 556,
+          "cache_read_input_tokens": 16179,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 556
+          },
+          "output_tokens": 2,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "c0917fdd-23fb-47a6-8c6d-9733739925dd"
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_018qbUWKAoW9SAqQZHwM4PFa",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01QF4TjBpVNvDN9FG1hLKoiZ",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \".tables\"",
+              "description": "List all tables in the database"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 3,
+          "cache_creation_input_tokens": 556,
+          "cache_read_input_tokens": 16179,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 556
+          },
+          "output_tokens": 2,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "64197cf2-7600-437c-98b6-8bf9e3ddfdd0"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01QF4TjBpVNvDN9FG1hLKoiZ",
+            "type": "tool_result",
+            "content": "customers        products         yearmonth      \ngasstations      transactions_1k",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "07bbf852-b0f5-4627-a357-b93b27e345c2",
+      "tool_use_result": {
+        "stdout": "customers        products         yearmonth      \ngasstations      transactions_1k",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_018qbUWKAoW9SAqQZHwM4PFa",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_018KPxpFurQpmNPJGSX6pxvC",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \".schema\"",
+              "description": "Get full schema of all tables"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 3,
+          "cache_creation_input_tokens": 556,
+          "cache_read_input_tokens": 16179,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 556
+          },
+          "output_tokens": 2,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "196abbba-4d61-4d2d-bb53-2cf7bb1969b3"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_018KPxpFurQpmNPJGSX6pxvC",
+            "type": "tool_result",
+            "content": "CREATE TABLE customers\n(\n    CustomerID INTEGER UNIQUE     not null\n        primary key,\n    Segment    TEXT null,\n    Currency   TEXT null\n);\nCREATE TABLE gasstations\n(\n    GasStationID INTEGER    UNIQUE   not null\n        primary key,\n    ChainID      INTEGER          null,\n    Country      TEXT null,\n    Segment      TEXT null\n);\nCREATE TABLE products\n(\n    ProductID   INTEGER   UNIQUE      not null\n        primary key,\n    Description TEXT null\n);\nCREATE TABLE IF NOT EXISTS \"transactions_1k\"\n(\n    TransactionID INTEGER\n        primary key autoincrement,\n    Date          DATE,\n    Time          TEXT,\n    CustomerID    INTEGER,\n    CardID        INTEGER,\n    GasStationID  INTEGER,\n    ProductID     INTEGER,\n    Amount        INTEGER,\n    Price         REAL\n);\nCREATE TABLE sqlite_sequence(name,seq);\nCREATE TABLE IF NOT EXISTS \"yearmonth\"\n(\n    CustomerID  INTEGER not null\n        references customers\n            on update cascade on delete cascade\n        references customers,\n    Date        TEXT    not null,\n    Consumption REAL,\n    primary key (Date, CustomerID)\n);",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "2b275fc6-a934-4d61-be80-53bad5367f31",
+      "tool_use_result": {
+        "stdout": "CREATE TABLE customers\n(\n    CustomerID INTEGER UNIQUE     not null\n        primary key,\n    Segment    TEXT null,\n    Currency   TEXT null\n);\nCREATE TABLE gasstations\n(\n    GasStationID INTEGER    UNIQUE   not null\n        primary key,\n    ChainID      INTEGER          null,\n    Country      TEXT null,\n    Segment      TEXT null\n);\nCREATE TABLE products\n(\n    ProductID   INTEGER   UNIQUE      not null\n        primary key,\n    Description TEXT null\n);\nCREATE TABLE IF NOT EXISTS \"transactions_1k\"\n(\n    TransactionID INTEGER\n        primary key autoincrement,\n    Date          DATE,\n    Time          TEXT,\n    CustomerID    INTEGER,\n    CardID        INTEGER,\n    GasStationID  INTEGER,\n    ProductID     INTEGER,\n    Amount        INTEGER,\n    Price         REAL\n);\nCREATE TABLE sqlite_sequence(name,seq);\nCREATE TABLE IF NOT EXISTS \"yearmonth\"\n(\n    CustomerID  INTEGER not null\n        references customers\n            on update cascade on delete cascade\n        references customers,\n    Date        TEXT    not null,\n    Consumption REAL,\n    primary key (Date, CustomerID)\n);",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01T6ir8G1UVwgJ1XcXLM3SC5",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Now I need to check if there's any column related to \"contactless\" or \"NFC\" in the schema. Looking at the schema, I don't see any column that indicates the payment method type (contactless/NFC vs chip vs swipe). Let me verify by checking the transactions and customers tables more closely."
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 574,
+          "cache_read_input_tokens": 16735,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 574
+          },
+          "output_tokens": 2,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "b7eaa2ae-4bca-4223-a392-30f1a6cbb088"
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01T6ir8G1UVwgJ1XcXLM3SC5",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01Ups1gE5tGUikSvXgX3ZTHY",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT * FROM transactions_1k LIMIT 5;\"",
+              "description": "Sample transactions data"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 574,
+          "cache_read_input_tokens": 16735,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 574
+          },
+          "output_tokens": 2,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "eebb690a-c956-4ac8-9704-2a5317fd12fb"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01Ups1gE5tGUikSvXgX3ZTHY",
+            "type": "tool_result",
+            "content": "1|2012-08-24|09:41:00|31543|486621|3704|2|28|672.64\n2|2012-08-24|10:03:00|46707|550134|3704|2|18|430.72\n3|2012-08-24|10:03:00|46707|550134|3704|23|1|121.99\n4|2012-08-24|13:53:00|7654|684220|656|5|5|120.74\n5|2012-08-24|08:49:00|17373|536109|741|2|28|645.05",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "e8417980-e65a-4b8f-8377-5839664e1c42",
+      "tool_use_result": {
+        "stdout": "1|2012-08-24|09:41:00|31543|486621|3704|2|28|672.64\n2|2012-08-24|10:03:00|46707|550134|3704|2|18|430.72\n3|2012-08-24|10:03:00|46707|550134|3704|23|1|121.99\n4|2012-08-24|13:53:00|7654|684220|656|5|5|120.74\n5|2012-08-24|08:49:00|17373|536109|741|2|28|645.05",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01T6ir8G1UVwgJ1XcXLM3SC5",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01DkmL4SvXHM4neckeyV9DEN",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT * FROM customers LIMIT 5;\"",
+              "description": "Sample customers data"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 574,
+          "cache_read_input_tokens": 16735,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 574
+          },
+          "output_tokens": 2,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "a6daae8a-4e8b-42e0-93a3-37f51bbf8969"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01DkmL4SvXHM4neckeyV9DEN",
+            "type": "tool_result",
+            "content": "3|SME|EUR\n5|LAM|EUR\n6|SME|EUR\n7|LAM|EUR\n9|SME|EUR",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "497c547a-1978-42eb-b101-b2067eb65832",
+      "tool_use_result": {
+        "stdout": "3|SME|EUR\n5|LAM|EUR\n6|SME|EUR\n7|LAM|EUR\n9|SME|EUR",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01T6ir8G1UVwgJ1XcXLM3SC5",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_019F2pBYjHdpcMnHy9J11rf2",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT * FROM gasstations LIMIT 5;\"",
+              "description": "Sample gasstations data"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 574,
+          "cache_read_input_tokens": 16735,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 574
+          },
+          "output_tokens": 2,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "88de4f4d-5e1c-422c-83de-ddc429d02fb8"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_019F2pBYjHdpcMnHy9J11rf2",
+            "type": "tool_result",
+            "content": "44|13|CZE|Value for money\n45|6|CZE|Premium\n46|23|CZE|Other\n47|33|CZE|Premium\n48|4|CZE|Premium",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "aa3d9834-97e8-42d4-8eea-5a0adb6207cf",
+      "tool_use_result": {
+        "stdout": "44|13|CZE|Value for money\n45|6|CZE|Premium\n46|23|CZE|Other\n47|33|CZE|Premium\n48|4|CZE|Premium",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01T6ir8G1UVwgJ1XcXLM3SC5",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01XVX8P1NjzQEi9eGw4axgbw",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT * FROM products LIMIT 5;\"",
+              "description": "Sample products data"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 574,
+          "cache_read_input_tokens": 16735,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 574
+          },
+          "output_tokens": 2,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "fe1e67a9-f3a9-4437-882b-ee6154c619de"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01XVX8P1NjzQEi9eGw4axgbw",
+            "type": "tool_result",
+            "content": "1|Rucn\u00ed zad\u00e1n\u00ed\n2|Nafta\n3|Special\n4|Super\n5|Natural",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "3c85454b-b22e-4512-a40b-18c5be365c89",
+      "tool_use_result": {
+        "stdout": "1|Rucn\u00ed zad\u00e1n\u00ed\n2|Nafta\n3|Special\n4|Super\n5|Natural",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_013EWeoyydodZqzPgfRJ3DCq",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "The database schema is clear. The claim mentions \"contactless (NFC) cards,\" but there is no column in any table that records the payment method type (contactless/NFC, chip, magnetic stripe, etc.). The `transactions_1k` table has `CardID` but no card type or payment method indicator. The `customers` table has `Segment` and `Currency`, but nothing about card technology.\n\nLet me also quickly verify the count of Czech gas station transactions after 2012-01-01 to see if the 933 figure is even verifiable:"
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 837,
+          "cache_read_input_tokens": 17309,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 837
+          },
+          "output_tokens": 1,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "f247caa6-22c7-4275-bc55-d7742ee25f26"
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_013EWeoyydodZqzPgfRJ3DCq",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_014MpVTHFv92dXWoCjMzDgtr",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT COUNT(*) FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.Country = 'CZE' AND t.Date > '2012-01-01';\"",
+              "description": "Count Czech gas station transactions after 2012-01-01"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 837,
+          "cache_read_input_tokens": 17309,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 837
+          },
+          "output_tokens": 1,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "cfb14fea-030e-4a16-95b4-fd7e66cf4806"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_014MpVTHFv92dXWoCjMzDgtr",
+            "type": "tool_result",
+            "content": "933",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "0a06224e-d586-49f0-9f80-f5270c3f0a0c",
+      "tool_use_result": {
+        "stdout": "933",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_019AeJ1bKdsVGRmL2HqN6hmg",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "The count of 933 matches the claim. However, the key assertion is about \"contactless (NFC) cards,\" and no such column or attribute exists in the database schema.\n\n```json\n{\"label\": \"NOT ENOUGH INFO\", \"reasoning\": \"The database does not contain any column or attribute that records whether a transaction was made using a contactless (NFC) card versus another payment method. While the count of 933 Czech gas station transactions after 2012-01-01 is confirmed correct, the claim about the payment method (contactless/NFC) cannot be verified because this concept is out-of-schema \u2014 no table tracks card type or payment technology.\"}\n```"
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 406,
+          "cache_read_input_tokens": 18146,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 406
+          },
+          "output_tokens": 1,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "7769482d-d3bd-4abc-9656-9ed4aa36c88e",
+      "uuid": "2e2b611c-5369-4415-933d-4391fdd4f017"
+    }
+  ],
+  "usage": {
+    "input_tokens": 6,
+    "output_tokens": 1112,
+    "cache_read_tokens": 68369,
+    "cache_creation_tokens": 2373,
+    "cost_usd": 0.08187675
+  },
+  "duration_seconds": 22.26,
+  "success": true
+}

@@ -1,0 +1,1454 @@
+{
+  "total_wrong": 70,
+  "total": 1000,
+  "error_rate": 7.0,
+  "misclassification_flows": {
+    "ENTAILED->CONTRADICTED": 48,
+    "CONTRADICTED->ENTAILED": 10,
+    "NOT ENOUGH INFO->ENTAILED": 5,
+    "NOT ENOUGH INFO->CONTRADICTED": 4,
+    "CONTRADICTED->NOT ENOUGH INFO": 2,
+    "ENTAILED->NOT ENOUGH INFO": 1
+  },
+  "errors_by_database": {
+    "codebase_community": 3,
+    "card_games": 6,
+    "california_schools": 2,
+    "thrombosis_prediction": 7,
+    "toxicology": 13,
+    "formula_1": 10,
+    "european_football_2": 10,
+    "debit_card_specializing": 4,
+    "financial": 8,
+    "student_club": 3,
+    "superhero": 4
+  },
+  "errors_by_category": {
+    "(none)": 61,
+    "SUBJECTIVE": 6,
+    "OUT-OF-SCHEMA": 2,
+    "COUNTERFACTUAL": 1
+  },
+  "error_types": {
+    "WRONG_COUNT": 22,
+    "INCORRECT_CONTRADICTION": 15,
+    "MISSED_CONTRADICTION": 10,
+    "WRONG_VALUE": 10,
+    "FALSE_ENTAILMENT": 5,
+    "FALSE_CONTRADICTION": 4,
+    "MISSED_CONTRADICTION_NEI": 2,
+    "ENTITY_NOT_FOUND": 1,
+    "MISSED_ENTAILMENT": 1
+  },
+  "claims": [
+    {
+      "claim_id": 15589,
+      "db_name": "codebase_community",
+      "category": "",
+      "claim": "There are 19 users in the UK who satisfy the criterion FavoriteCount >= 4.",
+      "extra_info": "favorite amount of 4 or more refers to FavoriteCount > = 4; Location = 'United Kingdom';",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states there are 19 users in the UK (Location = 'United Kingdom') with FavoriteCount >= 4, but querying the database by joining users and posts tables on OwnerUserId and filtering for Location = 'United Kingdom' and FavoriteCount >= 4 returns 14 distinct users, not 19.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \".schema users\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \".schema posts\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \"SELECT COUNT(DISTINCT u.Id) FROM users u JOIN posts p ON u.Id = p.OwnerUserId WHERE u.Location = 'United Kingdom' AND p.FavoriteCount >= 4;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \"SELECT DISTINCT Location FROM users WHERE Location LIKE '%United Kingdom%' OR Location LIKE '%UK%';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \"SELECT COUNT(DISTINCT u.Id) FROM users u JOIN posts p ON u.Id = p.OwnerUserId WHERE u.Location = 'United Kingdom' AND p.FavoriteCount >= 4;\""
+      ]
+    },
+    {
+      "claim_id": 2290,
+      "db_name": "card_games",
+      "category": "",
+      "claim": "A majority of cards\u2014over 50%\u2014do not have a text box in the normal layout.",
+      "extra_info": "do not have a text box refers to isTextless = 1; proportion refers to DIVIDE(COUNT(Textless = 1 and layout = 'normal'),COUNT(Textless))*100",
+      "actual": "CONTRADICTED",
+      "predicted": "ENTAILED",
+      "reasoning": "Using the hint formula DIVIDE(COUNT(isTextless=1 AND layout='normal'), COUNT(isTextless=1))*100, we get 115/115*100 = 100%. The claim states that 'over 50%' of textless cards are in the normal layout. Since 100% > 50%, the claim is supported by the data.",
+      "error_type": "MISSED_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".schema cards\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT COUNT(CASE WHEN isTextless = 1 AND layout = 'normal' THEN 1 END) as textless_normal, COUNT(CASE WHEN isTextless = 1 THEN 1 END) as total_textless, CAST(COUNT(CASE WHEN isTextless = 1 AND layout = 'normal' THEN 1 END) AS REAL) / COUNT(CASE WHEN isTextless = 1 THEN 1 END) * 100 as percentage FROM cards;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT COUNT(CASE WHEN isTextless = 1 THEN 1 END) as textless_normal, COUNT(*) as total_normal, CAST(COUNT(CASE WHEN isTextless = 1 THEN 1 END) AS REAL) / COUNT(*) * 100 as percentage FROM cards WHERE layout = 'normal';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT COUNT(CASE WHEN isTextless = 1 AND layout = 'normal' THEN 1 END) as numerator, COUNT(CASE WHEN isTextless = 1 THEN 1 END) as denominator, CAST(COUNT(CASE WHEN isTextless = 1 AND layout = 'normal' THEN 1 END) AS REAL) * 100.0 / COUNT(CASE WHEN isTextless = 1 THEN 1 END) as percentage FROM cards;\""
+      ]
+    },
+    {
+      "claim_id": 461,
+      "db_name": "california_schools",
+      "category": "",
+      "claim": "K-6 is the predominant grade span configuration among schools in Adelanto.",
+      "extra_info": "",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The data shows that K-5 is the predominant grade span in Adelanto with 6 schools, while K-6 has only 1 school. The claim that K-6 is the predominant configuration is incorrect.",
+      "error_type": "WRONG_VALUE",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/california_schools.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/california_schools.sqlite\" \".schema schools\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/california_schools.sqlite\" \"SELECT GSoffered, COUNT(*) as cnt FROM schools WHERE City = 'Adelanto' GROUP BY GSoffered ORDER BY cnt DESC;\""
+      ]
+    },
+    {
+      "claim_id": 6734,
+      "db_name": "thrombosis_prediction",
+      "category": "",
+      "claim": "Among patients with abnormal IgM levels (\u226440 or \u2265400), systemic lupus erythematosus is the most common diagnosis.",
+      "extra_info": "abnormal Ig M level refers to IGM <=40 OR IGM >= 400; most common disease refers to MAX(COUNT(Diagnosis));",
+      "actual": "CONTRADICTED",
+      "predicted": "ENTAILED",
+      "reasoning": "Among the 37 patients with abnormal IgM levels (IGM \u2264 40 or IGM \u2265 400), SLE (Systemic Lupus Erythematosus) is the most common diagnosis with 10 patients, followed by RA with 6. This confirms the claim that SLE is the most common diagnosis among patients with abnormal IgM levels.",
+      "error_type": "MISSED_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT Diagnosis, COUNT(*) as cnt FROM Examination WHERE ID IN (SELECT DISTINCT ID FROM Laboratory WHERE IGM <= 40 OR IGM >= 400) GROUP BY Diagnosis ORDER BY cnt DESC LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT Diagnosis, COUNT(*) as cnt FROM Patient WHERE ID IN (SELECT DISTINCT ID FROM Laboratory WHERE IGM <= 40 OR IGM >= 400) GROUP BY Diagnosis ORDER BY cnt DESC LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(DISTINCT ID) FROM Laboratory WHERE IGM <= 40 OR IGM >= 400;\""
+      ]
+    },
+    {
+      "claim_id": 2587,
+      "db_name": "card_games",
+      "category": "",
+      "claim": "In the duel format, the ten cards with the highest mana cost are Astral Cornucopia, Entreat the Angels, Quarantine Field, Mass Manipulation, Hour of Eternity, Recall, Part Water, Fall of the Titans, Bonfire of the Damned, and Release the Gremlins.",
+      "extra_info": "duels refer to format = 'duel'; the highest uncoverted mana cost refers to MAX(manaCost)",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim lists exactly 10 specific cards as having the highest manaCost in the duel format. While the first 7 cards (Astral Cornucopia through Part Water) are correctly the top 7 by lexicographic manaCost ordering, the claim then picks only 3 cards (Fall of the Titans, Bonfire of the Damned, Release the Gremlins) from a group of 6 cards that all share the same manaCost '{X}{X}{R}' (the other 3 being Meteor Shower, Builder's Bane, and Conflagrate). Since there are more than 10 cards tied for the top positions, the claim that these specific ten are 'the ten cards with the highest mana cost' is contradicted.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".schema cards\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".schema legalities\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT DISTINCT c.name, c.manaCost FROM cards c JOIN legalities l ON c.uuid = l.uuid WHERE l.format = 'duel' ORDER BY c.manaCost DESC LIMIT 20;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT DISTINCT c.name, c.manaCost, LENGTH(c.manaCost) as len FROM cards c JOIN legalities l ON c.uuid = l.uuid WHERE l.format = 'duel' ORDER BY LENGTH(c.manaCost) DESC, c.manaCost DESC LIMIT 20;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT DISTINCT c.name, c.manaCost FROM cards c JOIN legalities l ON c.uuid = l.uuid WHERE l.format = 'duel' AND c.manaCost IS NOT NULL ORDER BY c.manaCost DESC LIMIT 15;\""
+      ]
+    },
+    {
+      "claim_id": 2020,
+      "db_name": "card_games",
+      "category": "",
+      "claim": "There are 12 distinct card types featuring illustrations by Aaron Boyd.",
+      "extra_info": "Aaron Boyd' is artist;",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The database shows Aaron Boyd illustrated cards with only 2 distinct broad card types (Creature, Instant) or 4 distinct full type lines (Creature \u2014 Bird, Instant, Creature \u2014 Cat, Creature \u2014 Kavu). Neither interpretation yields the claimed 12 distinct card types.",
+      "error_type": "WRONG_VALUE",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".schema cards\" | head -80",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT COUNT(DISTINCT types) FROM cards WHERE artist = 'Aaron Boyd';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT DISTINCT types FROM cards WHERE artist = 'Aaron Boyd';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT COUNT(DISTINCT type) FROM cards WHERE artist = 'Aaron Boyd';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT DISTINCT type FROM cards WHERE artist = 'Aaron Boyd';\""
+      ]
+    },
+    {
+      "claim_id": 1864,
+      "db_name": "toxicology",
+      "category": "",
+      "claim": "The carcinogenicity entry for TR001_2_4 is unassigned; no label has been given.",
+      "extra_info": "label = '+' mean molecules are carcinogenic",
+      "actual": "CONTRADICTED",
+      "predicted": "NOT ENOUGH INFO",
+      "reasoning": "The identifier 'TR001_2_4' does not exist as a molecule_id in the molecule table. The database contains molecule IDs in the format 'TR001', 'TR002', etc., and atom IDs in the format 'TR001_1', 'TR001_2', etc. There is no entity 'TR001_2_4' in the database. Carcinogenicity labels ('+' or '-') are stored in the molecule table, and atoms do not have carcinogenicity labels. Since the referenced entity does not exist in the database, there is insufficient information to verify or refute the claim.",
+      "error_type": "MISSED_CONTRADICTION_NEI",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT molecule_id, label FROM molecule WHERE molecule_id = 'TR001_2_4';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT molecule_id, label FROM molecule WHERE molecule_id LIKE '%TR001%' LIMIT 20;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT molecule_id, label FROM molecule WHERE molecule_id LIKE 'TR%' LIMIT 20;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT * FROM atom WHERE atom_id = 'TR001_2_4';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT a.atom_id, a.molecule_id, a.element, m.label FROM atom a JOIN molecule m ON a.molecule_id = m.molecule_id WHERE a.atom_id = 'TR001_2_4';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT * FROM atom WHERE atom_id LIKE 'TR001_%' LIMIT 20;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT molecule_id, label FROM molecule WHERE molecule_id LIKE '%_%_%';\""
+      ]
+    },
+    {
+      "claim_id": 1385,
+      "db_name": "toxicology",
+      "category": "SUBJECTIVE",
+      "claim": "Among practicing chemists, the presence of calcium in non-carcinogenic molecules is generally considered unremarkable.",
+      "extra_info": "label = '-' means molecules are non-carcinogenic; least numerous refers to MIN(COUNT(element));",
+      "actual": "NOT ENOUGH INFO",
+      "predicted": "ENTAILED",
+      "reasoning": "The hint maps 'unremarkable' to 'least numerous' (MIN(COUNT(element))). In non-carcinogenic molecules (label = '-'), calcium ('ca') appears only 1 time, which is tied for the minimum count among all elements. This confirms that calcium is among the least numerous (most unremarkable) elements in non-carcinogenic molecules, supporting the claim.",
+      "error_type": "FALSE_ENTAILMENT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT element, COUNT(*) as cnt FROM atom JOIN molecule ON atom.molecule_id = molecule.molecule_id WHERE molecule.label = '-' GROUP BY element ORDER BY cnt ASC;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT DISTINCT element FROM atom WHERE element = 'ca' OR element = 'Ca';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT MIN(cnt) FROM (SELECT element, COUNT(*) as cnt FROM atom JOIN molecule ON atom.molecule_id = molecule.molecule_id WHERE molecule.label = '-' GROUP BY element);\""
+      ]
+    },
+    {
+      "claim_id": 4451,
+      "db_name": "formula_1",
+      "category": "",
+      "claim": "The surname of the driver with the best lap time in the second qualifying period of race 19 is Fisichella.",
+      "extra_info": "race number refers to raceId; second qualifying period refers to q2; best lap time refers to MIN(q2);",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The driver with the best (minimum) q2 lap time in race 19 (raceId=19) is R\u00e4ikk\u00f6nen with 1:34.188, not Fisichella. Fisichella has no recorded q2 time for that race.",
+      "error_type": "ENTITY_NOT_FOUND",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema qualifying\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema drivers\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT d.surname, q.q2 FROM qualifying q JOIN drivers d ON q.driverId = d.driverId WHERE q.raceId = 19 AND q.q2 IS NOT NULL AND q.q2 != '' ORDER BY q.q2 ASC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT d.surname, q.q2 FROM qualifying q JOIN drivers d ON q.driverId = d.driverId WHERE q.raceId = 19 AND q.q2 IS NOT NULL AND q.q2 != '' ORDER BY q.q2 ASC LIMIT 5;\"",
+        "sqlite3 /Users/david/workspace/claimdb/test_dbs/formula_1.sqlite \"SELECT d.surname, q.q2 FROM qualifying q JOIN drivers d ON q.driverId = d.driverId WHERE q.raceId = 19 AND q.q2 IS NOT NULL AND q.q2 <> '' ORDER BY q.q2 ASC LIMIT 5;\"",
+        "sqlite3 /Users/david/workspace/claimdb/test_dbs/formula_1.sqlite \"SELECT d.surname, q.q2 FROM qualifying q JOIN drivers d ON q.driverId = d.driverId WHERE q.raceId = 19 AND d.surname = 'Fisichella';\""
+      ]
+    },
+    {
+      "claim_id": 1304,
+      "db_name": "toxicology",
+      "category": "",
+      "claim": "On average, a carcinogenic molecule in the dataset has 732.125 single bonds.",
+      "extra_info": "carcinogenic molecules refers to label = '+'; single-bonded refers to bond_type = '-'; average = DIVIDE(SUM(bond_type = '-'), COUNT(atom_id))",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The average number of single bonds (bond_type = '-') per carcinogenic molecule (label = '+') is 3078 / 152 = 20.25, not 732.125 as claimed. No reasonable interpretation of the hint (SUM(bond_type='-') / COUNT(atom_id)) yields 732.125 either.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT \n  CAST(SUM(CASE WHEN b.bond_type = '-' THEN 1 ELSE 0 END) AS REAL) / COUNT(DISTINCT a.atom_id) AS avg_single_bonds\nFROM molecule m\nJOIN atom a ON a.molecule_id = m.molecule_id\nJOIN bond b ON b.molecule_id = m.molecule_id\nWHERE m.label = '+';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\n-- Interpretation: total single bonds / total atoms, for carcinogenic molecules\nSELECT \n  CAST(SUM(CASE WHEN b.bond_type = '-' THEN 1 ELSE 0 END) AS REAL) / COUNT(a.atom_id) AS result\nFROM molecule m\nJOIN atom a ON a.molecule_id = m.molecule_id\nLEFT JOIN bond b ON b.molecule_id = m.molecule_id\nWHERE m.label = '+';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\n-- Total single bonds in carcinogenic molecules\nSELECT COUNT(*) FROM bond b\nJOIN molecule m ON b.molecule_id = m.molecule_id\nWHERE m.label = '+' AND b.bond_type = '-';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\n-- Number of carcinogenic molecules\nSELECT COUNT(*) FROM molecule WHERE label = '+';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\n-- Number of atoms in carcinogenic molecules\nSELECT COUNT(*) FROM atom a\nJOIN molecule m ON a.molecule_id = m.molecule_id\nWHERE m.label = '+';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\n-- Average single bonds per carcinogenic molecule\nSELECT CAST(3078 AS REAL) / 152;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\n-- Using hint: SUM(bond_type = '-') / COUNT(atom_id) for carcinogenic molecules\n-- Interpreting this per the hint literally\nSELECT \n  CAST(SUM(bond_type = '-') AS REAL) / COUNT(atom_id) as result\nFROM bond b\nJOIN atom a ON b.molecule_id = a.molecule_id\nJOIN molecule m ON m.molecule_id = a.molecule_id\nWHERE m.label = '+';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\n-- Maybe the hint means: SUM of single bonds / COUNT of atom_id from atom table (not distinct)\n-- i.e., total single bonds for carcinogenic molecules / total number of atom records\nSELECT CAST(3078 AS REAL) / 3692;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\n-- Check: maybe the claim is about total single bonds / count of distinct molecules through atom_id grouping\n-- Or maybe 732.125 = 3078/some_number? 3078/732.125 = ?\nSELECT 3078.0 / 732.125;\n\""
+      ]
+    },
+    {
+      "claim_id": 1757,
+      "db_name": "toxicology",
+      "category": "",
+      "claim": "Rounded, approximately 0.0485% of compounds in the database contain a triple bond, which is under 0.05%.",
+      "extra_info": "triple bond refers to bond_type = '#';",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states that approximately 0.0485% of compounds contain a triple bond. However, 4 out of 343 molecules (1.1662%) contain at least one triple bond (bond_type = '#'). The figure 0.0485% actually corresponds to the percentage of bonds that are triple bonds (6 out of 12,379), not the percentage of compounds containing a triple bond. Since the claim explicitly says 'compounds' and the actual percentage of compounds with triple bonds (~1.17%) is far higher than the claimed ~0.0485%, the claim is contradicted.",
+      "error_type": "WRONG_VALUE",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(*) FROM molecule;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(DISTINCT molecule_id) FROM bond WHERE bond_type = '#';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT CAST(COUNT(DISTINCT CASE WHEN bond_type = '#' THEN molecule_id END) AS FLOAT) / COUNT(DISTINCT molecule_id) * 100 FROM bond;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(DISTINCT molecule_id) FROM bond;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(*) FROM bond; SELECT COUNT(*) FROM bond WHERE bond_type = '#';\""
+      ]
+    },
+    {
+      "claim_id": 6075,
+      "db_name": "european_football_2",
+      "category": "",
+      "claim": "The top five football player IDs among those with the lowest potential who prefer to use the right foot are 33339, 33340, 33341, 33342, and 153454.",
+      "extra_info": "lowest potential players refers to MIN(potential); prefer to use the right foot when attacking refers to preferred_foot = 'right'",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The top 5 player_api_ids with the lowest potential among right-foot preferred players are 41496 (potential 39), 166963 (42), 8893 (44), 168342 (44), and 68870 (45). The claim states they are 33339, 33340, 33341, 33342, and 153454, which do not match the actual results.",
+      "error_type": "WRONG_VALUE",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Player_Attributes\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT player_api_id, MIN(potential) as min_potential FROM Player_Attributes WHERE preferred_foot = 'right' GROUP BY player_api_id ORDER BY min_potential ASC LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT id, player_fifa_api_id, player_api_id, potential FROM Player_Attributes WHERE preferred_foot = 'right' ORDER BY potential ASC LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT id, player_fifa_api_id, player_api_id, potential, preferred_foot FROM Player_Attributes WHERE player_api_id IN (33339, 33340, 33341, 33342, 153454) ORDER BY potential ASC;\""
+      ]
+    },
+    {
+      "claim_id": 5576,
+      "db_name": "european_football_2",
+      "category": "",
+      "claim": "Fernando Morientes places tenth in the descending ranking of average heading accuracy among players taller than 180 centimeters, directly behind Daniel van Buyten.",
+      "extra_info": "heights are above 180 refers to Player.height > 180; average heading accuracy = DIVIDE(SUM(heading_accuracy), COUNT(player_fifa_api_id));",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "Fernando Morientes does place 10th in the descending ranking of average heading accuracy among players taller than 180cm. However, he is NOT directly behind Daniel van Buyten. Daniel van Buyten is 8th and Miroslav Klose is 9th (with the same average of ~90.18), so Klose is between van Buyten and Morientes. Morientes is directly behind Klose, not van Buyten.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Player\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Player_Attributes\"",
+        "sqlite3 -header -column \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"\nSELECT \n    p.player_name,\n    CAST(SUM(pa.heading_accuracy) AS REAL) / COUNT(pa.player_fifa_api_id) AS avg_heading_accuracy\nFROM Player p\nJOIN Player_Attributes pa ON p.player_fifa_api_id = pa.player_fifa_api_id\nWHERE p.height > 180\nGROUP BY p.player_fifa_api_id\nORDER BY avg_heading_accuracy DESC\nLIMIT 15;\n\""
+      ]
+    },
+    {
+      "claim_id": 6975,
+      "db_name": "thrombosis_prediction",
+      "category": "",
+      "claim": "In the thrombosis prediction dataset, 14 patients with normal triglyceride levels had other symptoms observed.",
+      "extra_info": "normal level of triglyceride refers to TG < 200; have other symptoms refers to Symptoms is not null;",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The query joining Laboratory (TG < 200) with Examination (Symptoms IS NOT NULL) returns 14 rows, but all belong to a single patient (ID 1567380). There is only 1 distinct patient meeting these criteria, not 14 patients as the claim states.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(DISTINCT L.ID) FROM Laboratory L INNER JOIN Examination E ON L.ID = E.ID WHERE L.TG < 200 AND E.Symptoms IS NOT NULL;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(*) FROM Laboratory L INNER JOIN Examination E ON L.ID = E.ID WHERE L.TG < 200 AND E.Symptoms IS NOT NULL;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(DISTINCT L.ID) FROM Laboratory L WHERE L.TG < 200;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(DISTINCT E.ID) FROM Examination E WHERE E.Symptoms IS NOT NULL;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT L.ID, L.TG, E.Symptoms FROM Laboratory L INNER JOIN Examination E ON L.ID = E.ID WHERE L.TG < 200 AND E.Symptoms IS NOT NULL LIMIT 20;\""
+      ]
+    },
+    {
+      "claim_id": 1800,
+      "db_name": "toxicology",
+      "category": "SUBJECTIVE",
+      "claim": "The total of 1,569 hydrogen atoms associated with '+' labeled molecules is alarmingly high.",
+      "extra_info": "label = '+' mean molecules are carcinogenic; hydrogen refers to element = h'",
+      "actual": "NOT ENOUGH INFO",
+      "predicted": "ENTAILED",
+      "reasoning": "The database confirms that the total count of hydrogen atoms (element = 'h') in molecules labeled '+' is exactly 1,569, matching the claim. The qualifier 'alarmingly high' is a subjective opinion but the core factual assertion about the count is fully supported by the data.",
+      "error_type": "FALSE_ENTAILMENT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(*) FROM atom a JOIN molecule m ON a.molecule_id = m.molecule_id WHERE m.label = '+' AND a.element = 'h';\""
+      ]
+    },
+    {
+      "claim_id": 2323,
+      "db_name": "card_games",
+      "category": "",
+      "claim": "Approximately 0.083% of all cards are Chinese Simplified and online-only.",
+      "extra_info": "are only available for online games refers to isOnlineOnly = 1; percentage = DIVIDE(COUNT(isOnlineOnly = 1),COUNT(isOnlineOnly))*100",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states approximately 0.083% of all cards are Chinese Simplified and online-only. However, querying the database reveals that zero cards are both Chinese Simplified (in foreign_data) and online-only (isOnlineOnly = 1). There are 4,733 online-only cards but none of them have any foreign_data entries, so the actual percentage is 0%, not 0.083%.",
+      "error_type": "WRONG_VALUE",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".schema cards\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".schema foreign_data\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT DISTINCT language FROM foreign_data WHERE language LIKE '%Chinese%'\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT COUNT(*) FROM cards\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"\nSELECT \n  COUNT(CASE WHEN c.isOnlineOnly = 1 THEN 1 END) as chinese_simplified_online_only,\n  COUNT(*) as total_cards,\n  CAST(COUNT(CASE WHEN c.isOnlineOnly = 1 THEN 1 END) AS REAL) / COUNT(*) * 100 as percentage\nFROM cards c\nJOIN foreign_data fd ON c.uuid = fd.uuid\nWHERE fd.language = 'Chinese Simplified';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"\n-- Approach: percentage of all cards that are Chinese Simplified AND online-only\n-- Numerator: cards that have Chinese Simplified foreign_data AND isOnlineOnly = 1\n-- Denominator: total number of cards\nSELECT \n  (SELECT COUNT(DISTINCT c.uuid) FROM cards c JOIN foreign_data fd ON c.uuid = fd.uuid WHERE fd.language = 'Chinese Simplified' AND c.isOnlineOnly = 1) as numerator,\n  (SELECT COUNT(*) FROM cards) as denominator,\n  CAST((SELECT COUNT(DISTINCT c.uuid) FROM cards c JOIN foreign_data fd ON c.uuid = fd.uuid WHERE fd.language = 'Chinese Simplified' AND c.isOnlineOnly = 1) AS REAL) / (SELECT COUNT(*) FROM cards) * 100 as percentage;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"\n-- Check: How many cards are online-only?\nSELECT COUNT(*) FROM cards WHERE isOnlineOnly = 1;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"\n-- Check if any online-only cards have foreign data at all\nSELECT fd.language, COUNT(*) \nFROM cards c \nJOIN foreign_data fd ON c.uuid = fd.uuid \nWHERE c.isOnlineOnly = 1 \nGROUP BY fd.language;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"\n-- Using the hint formula: DIVIDE(COUNT(isOnlineOnly = 1), COUNT(isOnlineOnly)) * 100\n-- Applied to Chinese Simplified cards only\nSELECT \n  COUNT(CASE WHEN c.isOnlineOnly = 1 THEN 1 END) as online_only_count,\n  COUNT(c.isOnlineOnly) as total_count,\n  CAST(COUNT(CASE WHEN c.isOnlineOnly = 1 THEN 1 END) AS REAL) / COUNT(c.isOnlineOnly) * 100 as percentage\nFROM cards c\nJOIN foreign_data fd ON c.uuid = fd.uuid\nWHERE fd.language = 'Chinese Simplified';\n\""
+      ]
+    },
+    {
+      "claim_id": 16404,
+      "db_name": "debit_card_specializing",
+      "category": "",
+      "claim": "On 2012-08-25, the first paid customer at a gas station was recorded in CZE.",
+      "extra_info": "'2012/8/25' can be represented by '2012-08-25'",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states the first paid customer at a gas station in CZE was recorded on 2012-08-25. However, the database shows the earliest paid transaction at a CZE gas station occurred on 2012-08-23, not 2012-08-25.",
+      "error_type": "WRONG_VALUE",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT t.*, g.Country FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE t.Date = '2012-08-25' ORDER BY t.Time LIMIT 20;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT DISTINCT Country FROM gasstations;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT MIN(t.Date) as earliest_date, g.Country FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.Country = 'CZE' AND t.Price > 0;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT MIN(t.Date) as earliest_date FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE t.Price > 0;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT MIN(Date) FROM transactions_1k;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT t.Date, t.Time, t.CustomerID, t.Price, g.Country FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.Country = 'CZE' AND t.Price > 0 ORDER BY t.Date, t.Time LIMIT 10;\""
+      ]
+    },
+    {
+      "claim_id": 2418,
+      "db_name": "card_games",
+      "category": "",
+      "claim": "There is no Korean version of the Magic: The Gathering card \"Ancestor's Chosen\" in any set.",
+      "extra_info": "set of cards with \"Ancestor''s Chosen\" in it refers to name = 'Ancestor''s Chosen'; Korean version refers to language = 'Korean'",
+      "actual": "CONTRADICTED",
+      "predicted": "ENTAILED",
+      "reasoning": "The database confirms there is no Korean version of 'Ancestor's Chosen' in any set. Querying the foreign_data table joined with cards for name = 'Ancestor's Chosen' and language = 'Korean' returns zero results. The card exists in sets 10E, JUD, and UMA with translations in German, Spanish, French, Italian, Japanese, Portuguese (Brazil), Russian, and Chinese Simplified, but not Korean.",
+      "error_type": "MISSED_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".schema\" 2>&1 | head -100",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT fd.language, fd.name, c.setCode FROM foreign_data fd JOIN cards c ON fd.uuid = c.uuid WHERE c.name = 'Ancestor''s Chosen' AND fd.language = 'Korean';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT DISTINCT fd.language, c.setCode FROM foreign_data fd JOIN cards c ON fd.uuid = c.uuid WHERE c.name = 'Ancestor''s Chosen';\""
+      ]
+    },
+    {
+      "claim_id": 5489,
+      "db_name": "european_football_2",
+      "category": "",
+      "claim": "Rangers recorded the most away wins in the 2009/2010 Scotland Premier League season.",
+      "extra_info": "Final result should return the Team.team_long_name; Scotland Premier League refers to League.name = 'Scotland Premier League'; away team refers to away_team_api_id; away team that won the most refers to MAX(SUBTRACT(away_team_goal, home_team_goal) > 0); 2010 season refers to season = '2009/2010'; won the most refers to MAX(COUNT(*));",
+      "actual": "CONTRADICTED",
+      "predicted": "ENTAILED",
+      "reasoning": "Rangers had 11 away wins in the 2009/2010 Scotland Premier League season, which is tied for the maximum with Celtic (also 11). Rangers did record the most away wins (11), which matches the maximum count. While Celtic also had 11, the claim that Rangers recorded 'the most' is technically supported since they achieved the highest count of away wins.",
+      "error_type": "MISSED_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema League\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Match\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Team\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"\nSELECT T.team_long_name, COUNT(*) as away_wins\nFROM Match M\nJOIN League L ON M.league_id = L.id\nJOIN Team T ON M.away_team_api_id = T.team_api_id\nWHERE L.name = 'Scotland Premier League'\n  AND M.season = '2009/2010'\n  AND M.away_team_goal > M.home_team_goal\nGROUP BY T.team_long_name\nORDER BY away_wins DESC;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"\nSELECT T.team_long_name, COUNT(*) as away_wins\nFROM Match M\nJOIN League L ON M.league_id = L.id\nJOIN Team T ON M.away_team_api_id = T.team_api_id\nWHERE L.name = 'Scotland Premier League'\n  AND M.season = '2009/2010'\n  AND M.away_team_goal > M.home_team_goal\nGROUP BY T.team_long_name\nHAVING away_wins = (\n  SELECT MAX(cnt) FROM (\n    SELECT COUNT(*) as cnt\n    FROM Match M2\n    JOIN League L2 ON M2.league_id = L2.id\n    WHERE L2.name = 'Scotland Premier League'\n      AND M2.season = '2009/2010'\n      AND M2.away_team_goal > M2.home_team_goal\n    GROUP BY M2.away_team_api_id\n  )\n)\nORDER BY away_wins DESC;\n\""
+      ]
+    },
+    {
+      "claim_id": 6722,
+      "db_name": "thrombosis_prediction",
+      "category": "",
+      "claim": "A total of 1,590 patients with a normal IgA level presented to the hospital on or after January 1, 1990.",
+      "extra_info": "normal Ig A level refers to IGA > 80 AND IGA < 500; came to the hospital after 1990/1/1 refers to YEAR(`First Date`) > = 1990;",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states 1,590 patients with normal IgA (IGA > 80 AND IGA < 500) presented on or after January 1, 1990. Querying the database shows 140 distinct patients meeting these criteria, or 1,627 laboratory records (rows) if counting non-distinct entries. Neither number matches 1,590, so the claim is contradicted.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(DISTINCT P.ID) FROM Patient P INNER JOIN Laboratory L ON P.ID = L.ID WHERE L.IGA > 80 AND L.IGA < 500 AND strftime('%Y', P.\\`First Date\\`) >= '1990';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(*) FROM Patient P INNER JOIN Laboratory L ON P.ID = L.ID WHERE L.IGA > 80 AND L.IGA < 500 AND strftime('%Y', P.\\`First Date\\`) >= '1990';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(*) FROM Laboratory WHERE IGA > 80 AND IGA < 500;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(*) FROM Patient P INNER JOIN Laboratory L ON P.ID = L.ID WHERE L.IGA > 80 AND L.IGA < 500 AND P.\\`First Date\\` >= '1990-01-01';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(DISTINCT L.ID) FROM Laboratory L INNER JOIN Patient P ON L.ID = P.ID WHERE L.IGA > 80 AND L.IGA < 500 AND P.\\`First Date\\` >= '1990-01-01';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(*) FROM Patient WHERE \\`First Date\\` >= '1990-01-01';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(*) FROM Patient P INNER JOIN Laboratory L ON P.ID = L.ID WHERE L.IGA >= 80 AND L.IGA <= 500 AND P.\\`First Date\\` >= '1990-01-01';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(*) FROM Laboratory L WHERE L.IGA > 80 AND L.IGA < 500 AND L.ID IN (SELECT P.ID FROM Patient P WHERE P.\\`First Date\\` >= '1990-01-01');\""
+      ]
+    },
+    {
+      "claim_id": 802,
+      "db_name": "financial",
+      "category": "",
+      "claim": "The number of account holders without credit cards in the South Bohemia region is 74.",
+      "extra_info": "A3 contains the region names; South Bohemia is one of region names.",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states that 74 account holders in the South Bohemia region do not have credit cards. However, the database shows that 74 is actually the number of accounts in south Bohemia that ARE associated with cards. The number of accounts without any cards in south Bohemia is 296 (370 total accounts minus 74 with cards). The claim has the number inverted \u2014 74 is the count WITH cards, not WITHOUT.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema account\" && sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema card\" && sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema district\" && sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema disp\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT COUNT(DISTINCT a.account_id) FROM account a JOIN district d ON a.district_id = d.district_id WHERE d.A3 = 'South Bohemia' AND a.account_id NOT IN (SELECT DISTINCT di.account_id FROM disp di JOIN card c ON di.disp_id = c.disp_id);\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT DISTINCT A3 FROM district ORDER BY A3;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT COUNT(DISTINCT a.account_id) FROM account a JOIN district d ON a.district_id = d.district_id WHERE d.A3 = 'south Bohemia' AND a.account_id NOT IN (SELECT DISTINCT di.account_id FROM disp di JOIN card c ON di.disp_id = c.disp_id);\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT COUNT(DISTINCT di.client_id) FROM disp di JOIN account a ON di.account_id = a.account_id JOIN district d ON a.district_id = d.district_id WHERE d.A3 = 'south Bohemia' AND di.client_id NOT IN (SELECT DISTINCT di2.client_id FROM disp di2 JOIN card c ON di2.disp_id = c.disp_id);\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT COUNT(DISTINCT di.client_id) FROM disp di JOIN account a ON di.account_id = a.account_id JOIN district d ON a.district_id = d.district_id WHERE d.A3 = 'south Bohemia' AND di.type = 'OWNER' AND di.client_id NOT IN (SELECT DISTINCT di2.client_id FROM disp di2 JOIN card c ON di2.disp_id = c.disp_id);\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT COUNT(DISTINCT a.account_id) FROM account a JOIN district d ON a.district_id = d.district_id WHERE d.A3 = 'south Bohemia';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT COUNT(DISTINCT a.account_id) FROM account a JOIN district d ON a.district_id = d.district_id JOIN disp di ON a.account_id = di.account_id JOIN card c ON di.disp_id = c.disp_id WHERE d.A3 = 'south Bohemia';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT DISTINCT c.type FROM card c;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT COUNT(DISTINCT a.account_id) FROM account a JOIN district d ON a.district_id = d.district_id JOIN disp di ON a.account_id = di.account_id JOIN card c ON di.disp_id = c.disp_id WHERE d.A3 = 'south Bohemia' AND c.type = 'classic';\""
+      ]
+    },
+    {
+      "claim_id": 1236,
+      "db_name": "financial",
+      "category": "",
+      "claim": "No female client meets both criteria simultaneously; there is no account number that is both the oldest and has the lowest average salary.",
+      "extra_info": "Female refers to 'F' in the gender; A11 contains information about average salary",
+      "actual": "CONTRADICTED",
+      "predicted": "ENTAILED",
+      "reasoning": "The oldest accounts (date 1993-01-01) held by female clients have A11 values of 8743, 8743, 8427, and 10673 \u2014 none equal to the minimum A11 of 8110. Conversely, accounts with A11=8110 held by female clients have dates ranging from 1993-04-21 to 1997-12-19 \u2014 none as early as 1993-01-01. Therefore, no female client's account simultaneously satisfies both being the oldest and having the lowest average salary, confirming the claim.",
+      "error_type": "MISSED_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema client\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema account\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema disp\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema district\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT MIN(a.date) FROM account a JOIN disp d ON a.account_id = d.account_id JOIN client c ON d.client_id = c.client_id WHERE c.gender = 'F';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT MIN(dist.A11) FROM district dist JOIN account a ON a.district_id = dist.district_id JOIN disp d ON a.account_id = d.account_id JOIN client c ON d.client_id = c.client_id WHERE c.gender = 'F';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"\nSELECT a.account_id, a.date, dist.A11\nFROM account a\nJOIN disp d ON a.account_id = d.account_id\nJOIN client c ON d.client_id = c.client_id\nJOIN district dist ON a.district_id = dist.district_id\nWHERE c.gender = 'F'\n  AND a.date = (SELECT MIN(a2.date) FROM account a2 JOIN disp d2 ON a2.account_id = d2.account_id JOIN client c2 ON d2.client_id = c2.client_id WHERE c2.gender = 'F')\n  AND dist.A11 = (SELECT MIN(dist2.A11) FROM district dist2 JOIN account a2 ON a2.district_id = dist2.district_id JOIN disp d2 ON a2.account_id = d2.account_id JOIN client c2 ON d2.client_id = c2.client_id WHERE c2.gender = 'F');\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"\nSELECT a.account_id, a.date, dist.A11\nFROM account a\nJOIN disp d ON a.account_id = d.account_id\nJOIN client c ON d.client_id = c.client_id\nJOIN district dist ON a.district_id = dist.district_id\nWHERE c.gender = 'F'\n  AND a.date = '1993-01-01';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"\nSELECT a.account_id, a.date, dist.A11\nFROM account a\nJOIN disp d ON a.account_id = d.account_id\nJOIN client c ON d.client_id = c.client_id\nJOIN district dist ON a.district_id = dist.district_id\nWHERE c.gender = 'F'\n  AND dist.A11 = 8110;\n\""
+      ]
+    },
+    {
+      "claim_id": 5098,
+      "db_name": "formula_1",
+      "category": "",
+      "claim": "Driver ID 824 recorded the fastest first-lap time of the race, with 810 second and 59 third.",
+      "extra_info": "fastest time refers to Min(time);",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states that Driver ID 824 recorded the fastest first-lap time of the race. However, querying the lapTimes table shows that driver 824 never had the minimum (fastest) lap 1 time in any race they participated in. In every race, other drivers recorded faster first-lap times than driver 824. Therefore, the central assertion of the claim is contradicted by the data.",
+      "error_type": "WRONG_VALUE",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema lapTimes\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT * FROM lapTimes WHERE driverId = 824 AND lap = 1 LIMIT 20;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT raceId, driverId, lap, position, time, milliseconds FROM lapTimes WHERE driverId = 824 AND lap = 1 ORDER BY milliseconds ASC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT raceId, driverId, lap, position, time, milliseconds FROM lapTimes WHERE lap = 1 AND raceId = 907 ORDER BY milliseconds ASC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema results\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT * FROM lapTimes WHERE driverId = 824 AND lap = 1 AND milliseconds = 81059;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"\nSELECT lt.raceId, lt.driverId, lt.time, lt.milliseconds\nFROM lapTimes lt\nWHERE lt.lap = 1\nAND lt.driverId = 824\nAND lt.milliseconds = (\n    SELECT MIN(lt2.milliseconds)\n    FROM lapTimes lt2\n    WHERE lt2.raceId = lt.raceId AND lt2.lap = 1\n);\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"\nSELECT driverId, time, milliseconds, position FROM lapTimes WHERE raceId = 810 AND lap = 1 ORDER BY milliseconds ASC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT DISTINCT raceId FROM lapTimes WHERE driverId = 824 ORDER BY raceId;\" ",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT raceId, time, milliseconds FROM lapTimes WHERE driverId = 824 AND lap = 1 AND time LIKE '%810%';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT raceId, time, milliseconds FROM lapTimes WHERE driverId = 824 AND lap = 1 AND time LIKE '%59%';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT * FROM races WHERE raceId = 810;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"\nSELECT raceId, driverId, lap, position, time, milliseconds \nFROM lapTimes \nWHERE driverId = 824 AND lap = 1\nORDER BY milliseconds ASC;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT * FROM results WHERE driverId = 824 LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"\nSELECT driverId, MIN(milliseconds) as fastest_lap1\nFROM lapTimes \nWHERE lap = 1\nGROUP BY driverId\nORDER BY fastest_lap1 ASC\nLIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"\nSELECT * FROM lapTimes WHERE driverId = 824 AND lap = 1 AND milliseconds = 59810;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT * FROM results WHERE driverId = 824 AND fastestLap = 1;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema pitStops\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT * FROM pitStops WHERE driverId = 824 AND stop = 1 ORDER BY milliseconds ASC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"\nWITH fastest_lap1 AS (\n    SELECT raceId, MIN(milliseconds) as min_ms\n    FROM lapTimes\n    WHERE lap = 1\n    GROUP BY raceId\n)\nSELECT lt.raceId, lt.driverId, lt.time, lt.milliseconds\nFROM lapTimes lt\nJOIN fastest_lap1 f ON lt.raceId = f.raceId AND lt.milliseconds = f.min_ms\nWHERE lt.lap = 1 AND lt.driverId = 824;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema qualifying\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT * FROM qualifying WHERE driverId = 824 LIMIT 10;\""
+      ]
+    },
+    {
+      "claim_id": 784,
+      "db_name": "financial",
+      "category": "",
+      "claim": "Nachod ranks ninth by the number of female account holders, with 37.",
+      "extra_info": "A2 refers to districts; Female refers to gender = 'F'",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "Nachod does rank 9th by the number of female account holders, which matches the claim. However, the actual count is 36, not 37 as stated in the claim. Since the number is off by 1, the claim is contradicted by the data.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema district\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema client\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema account\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema disp\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT d2.A2, COUNT(DISTINCT a.account_id) as female_account_count FROM client c JOIN disp d ON c.client_id = d.client_id JOIN account a ON d.account_id = a.account_id JOIN district d2 ON a.district_id = d2.district_id WHERE c.gender = 'F' GROUP BY d2.A2 ORDER BY female_account_count DESC;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT rank, A2, female_account_count FROM (SELECT d2.A2, COUNT(DISTINCT a.account_id) as female_account_count, ROW_NUMBER() OVER (ORDER BY COUNT(DISTINCT a.account_id) DESC) as rank FROM client c JOIN disp d ON c.client_id = d.client_id JOIN account a ON d.account_id = a.account_id JOIN district d2 ON a.district_id = d2.district_id WHERE c.gender = 'F' GROUP BY d2.A2) WHERE A2 = 'Nachod';\""
+      ]
+    },
+    {
+      "claim_id": 15831,
+      "db_name": "student_club",
+      "category": "",
+      "claim": "Among Student_Club events, the Yearly Kickoff drew the highest number of attending students.",
+      "extra_info": "event with highest attendance refers to MAX(COUNT(link_to_event))",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states that 'the Yearly Kickoff drew the highest number of attending students,' implying it was uniquely the top event. However, the data shows that both 'Registration' and 'Yearly Kickoff' are tied at 30 attendees each. Yearly Kickoff did not exclusively draw the highest attendance.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/student_club.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/student_club.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/student_club.sqlite\" \"SELECT e.event_name, COUNT(a.link_to_event) as attendance_count FROM attendance a JOIN event e ON a.link_to_event = e.event_id GROUP BY a.link_to_event ORDER BY attendance_count DESC LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/student_club.sqlite\" \"SELECT e.event_name, COUNT(a.link_to_member) as attendance_count FROM attendance a JOIN event e ON a.link_to_event = e.event_id GROUP BY a.link_to_event HAVING attendance_count = (SELECT MAX(cnt) FROM (SELECT COUNT(link_to_event) as cnt FROM attendance GROUP BY link_to_event));\""
+      ]
+    },
+    {
+      "claim_id": 6704,
+      "db_name": "thrombosis_prediction",
+      "category": "",
+      "claim": "The thrombosis prediction dataset contains 4 symptomatic patients within the normal IgG group.",
+      "extra_info": "normal Ig G level refers to IGG > 900 and IGG < 2000; have symptoms refers to Symptoms IS NOT NULL;",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states there are 4 symptomatic patients in the normal IgG group (IGG > 900 AND IGG < 2000, Symptoms IS NOT NULL). However, querying the database shows only 1 distinct patient (ID 1567380) meets these criteria. The apparent count of 4 comes from multiple laboratory records for the same patient, not 4 different patients.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT COUNT(DISTINCT L.ID)\nFROM Laboratory L\nJOIN Examination E ON L.ID = E.ID\nWHERE L.IGG > 900 AND L.IGG < 2000\nAND E.Symptoms IS NOT NULL;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT DISTINCT L.ID, L.IGG, E.Symptoms\nFROM Laboratory L\nJOIN Examination E ON L.ID = E.ID\nWHERE L.IGG > 900 AND L.IGG < 2000\nAND E.Symptoms IS NOT NULL;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT L.ID, L.Date, L.IGG, E.\\\"Examination Date\\\", E.Symptoms\nFROM Laboratory L\nJOIN Examination E ON L.ID = E.ID\nWHERE L.IGG > 900 AND L.IGG < 2000\nAND E.Symptoms IS NOT NULL\nORDER BY L.ID;\n\""
+      ]
+    },
+    {
+      "claim_id": 4452,
+      "db_name": "formula_1",
+      "category": "",
+      "claim": "In race 19, Fisichella recorded the fastest time in Q2.",
+      "extra_info": "race number refers to raceId; second qualifying period refers to q2; best lap time refers to MIN(q2);",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "In race 19, Fisichella has no Q2 time recorded (empty/null), meaning he did not participate in or complete Q2. The fastest Q2 time was set by R\u00e4ikk\u00f6nen at 1:34.188. Therefore, Fisichella did not record the fastest time in Q2.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema qualifying\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema drivers\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT q.q2, d.surname, d.forename FROM qualifying q JOIN drivers d ON q.driverId = d.driverId WHERE q.raceId = 19 AND q.q2 IS NOT NULL AND q.q2 != '' ORDER BY q.q2 ASC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT q.q2, d.surname, d.forename FROM qualifying q JOIN drivers d ON q.driverId = d.driverId WHERE q.raceId = 19 AND q.q2 IS NOT NULL AND q.q2 != '' ORDER BY q.q2 ASC LIMIT 5;\"",
+        "sqlite3 /Users/david/workspace/claimdb/test_dbs/formula_1.sqlite \"SELECT q.q2, d.surname, d.forename FROM qualifying q JOIN drivers d ON q.driverId = d.driverId WHERE q.raceId = 19 AND q.q2 IS NOT NULL AND q.q2 <> '' ORDER BY q.q2 ASC LIMIT 5;\"",
+        "sqlite3 /Users/david/workspace/claimdb/test_dbs/formula_1.sqlite \"SELECT q.q2, d.surname, d.forename FROM qualifying q JOIN drivers d ON q.driverId = d.driverId WHERE q.raceId = 19 AND d.surname = 'Fisichella';\""
+      ]
+    },
+    {
+      "claim_id": 1936,
+      "db_name": "toxicology",
+      "category": "",
+      "claim": "The percentage of carcinogenic molecules among those with triple-bonded hydrogen atoms is 100%.",
+      "extra_info": "hydrogen refers to element = 'h'; label = '+' mean molecules are carcinogenic; triple bond refers to bond_type = '#'; percentage = DIVIDE(SUM(label = '+'), COUNT(molecule_id)) * 100.0 where element = 'h' AND bond_type = '#';",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "There are 2 molecules that contain both hydrogen atoms and triple bonds: TR377 (non-carcinogenic, label '-') and TR499 (carcinogenic, label '+'). The percentage of carcinogenic molecules among them is 50%, not 100% as claimed.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT DISTINCT m.molecule_id, m.label\nFROM molecule m\nJOIN atom a ON m.molecule_id = a.molecule_id\nJOIN connected c ON a.atom_id = c.atom_id OR a.atom_id = c.atom_id2\nJOIN bond b ON c.bond_id = b.bond_id\nWHERE a.element = 'h' AND b.bond_type = '#';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(*) FROM bond WHERE bond_type = '#';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(*) FROM atom WHERE element = 'h';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT b.bond_id, b.molecule_id, b.bond_type, c.atom_id, c.atom_id2, a1.element as el1, a2.element as el2\nFROM bond b\nJOIN connected c ON b.bond_id = c.bond_id\nJOIN atom a1 ON c.atom_id = a1.atom_id\nJOIN atom a2 ON c.atom_id2 = a2.atom_id\nWHERE b.bond_type = '#';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT DISTINCT m.molecule_id, m.label\nFROM molecule m\nWHERE m.molecule_id IN (\n    SELECT DISTINCT a.molecule_id FROM atom a WHERE a.element = 'h'\n)\nAND m.molecule_id IN (\n    SELECT DISTINCT b.molecule_id FROM bond b WHERE b.bond_type = '#'\n);\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT \n    CAST(SUM(CASE WHEN m.label = '+' THEN 1 ELSE 0 END) AS REAL) * 100.0 / COUNT(DISTINCT m.molecule_id) as percentage\nFROM molecule m\nWHERE m.molecule_id IN (\n    SELECT DISTINCT a.molecule_id FROM atom a WHERE a.element = 'h'\n)\nAND m.molecule_id IN (\n    SELECT DISTINCT b.molecule_id FROM bond b WHERE b.bond_type = '#'\n);\n\""
+      ]
+    },
+    {
+      "claim_id": 5607,
+      "db_name": "european_football_2",
+      "category": "",
+      "claim": "Kylian Mbapp\u00e9 and Erling Haaland share the top potential score; Lionel Messi does not match their maximum.",
+      "extra_info": "potential score refers to potential; highest potential score refers to MAX(potential);",
+      "actual": "CONTRADICTED",
+      "predicted": "NOT ENOUGH INFO",
+      "reasoning": "Erling Haaland does not exist in the database, so the claim that he and Mbapp\u00e9 share the top potential score cannot be verified. Additionally, the data that does exist contradicts other parts of the claim: Lionel Messi actually has the highest potential (97) in the database, while Mbapp\u00e9's max potential is only 85. However, since a key entity (Haaland) is missing, the claim is classified as NOT ENOUGH INFO.",
+      "error_type": "MISSED_CONTRADICTION_NEI",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema\" | head -100",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT player_name FROM Player WHERE player_name LIKE '%Mbappe%' OR player_name LIKE '%Mbapp\u00e9%' OR player_name LIKE '%Kylian%'\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT player_name FROM Player WHERE player_name LIKE '%Haaland%' OR player_name LIKE '%Erling%'\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT player_name FROM Player WHERE player_name LIKE '%Messi%' OR player_name LIKE '%Lionel%'\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT player_name FROM Player WHERE player_name LIKE '%Haaland%'\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT p.player_name, MAX(pa.potential) as max_potential FROM Player p JOIN Player_Attributes pa ON p.player_api_id = pa.player_api_id WHERE p.player_name LIKE '%Mbappe%' GROUP BY p.player_name\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT p.player_name, MAX(pa.potential) as max_potential FROM Player p JOIN Player_Attributes pa ON p.player_api_id = pa.player_api_id WHERE p.player_name = 'Lionel Messi' GROUP BY p.player_name\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT p.player_name, MAX(pa.potential) as max_potential FROM Player p JOIN Player_Attributes pa ON p.player_api_id = pa.player_api_id GROUP BY p.player_name ORDER BY max_potential DESC LIMIT 10\""
+      ]
+    },
+    {
+      "claim_id": 1852,
+      "db_name": "toxicology",
+      "category": "",
+      "claim": "There are 442 distinct molecules that are sulphur-free and lack any double bonds.",
+      "extra_info": "double bond refers to bond_type = ' = '; bond_type ! = ' = '; sulphur refers to element = 's'",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The database contains only 343 total molecules, making 442 impossible. The actual count of distinct molecules that are sulphur-free (no atoms with element='s') and lack any double bonds (no bonds with bond_type='=') is 50, not 442 as claimed.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT COUNT(DISTINCT m.molecule_id)\nFROM molecule m\nWHERE m.molecule_id NOT IN (\n    SELECT DISTINCT molecule_id FROM atom WHERE element = 's'\n)\nAND m.molecule_id NOT IN (\n    SELECT DISTINCT molecule_id FROM bond WHERE bond_type = ' = '\n);\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT DISTINCT element FROM atom ORDER BY element;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT DISTINCT bond_type, length(bond_type), hex(bond_type) FROM bond;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT COUNT(DISTINCT m.molecule_id)\nFROM molecule m\nWHERE m.molecule_id NOT IN (\n    SELECT DISTINCT molecule_id FROM atom WHERE element = 's'\n)\nAND m.molecule_id NOT IN (\n    SELECT DISTINCT molecule_id FROM bond WHERE bond_type = '='\n);\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT COUNT(DISTINCT m.molecule_id)\nFROM molecule m\nWHERE m.molecule_id NOT IN (\n    SELECT DISTINCT molecule_id FROM atom WHERE element = 's'\n)\nAND m.molecule_id NOT IN (\n    SELECT DISTINCT molecule_id FROM bond WHERE bond_type = ' = '\n);\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT bond_type, COUNT(*) FROM bond GROUP BY bond_type;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(*) FROM molecule;\""
+      ]
+    },
+    {
+      "claim_id": 5828,
+      "db_name": "european_football_2",
+      "category": "",
+      "claim": "The mean overall rating for all players with birthdays before 1986 is 69.",
+      "extra_info": "average overall rating = DIVIDE(SUM(overall_rating), COUNT(id)); born before the year 1986 refers to strftime('%Y', birthday) < '1986';",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The mean overall rating for players born before 1986 is approximately 70.43 (SUM=4,846,399 / COUNT=68,810), which rounds to 70, not 69 as claimed. The claim's assertion of 69 is contradicted by the data.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Player\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Player_Attributes\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT CAST(SUM(pa.overall_rating) AS REAL) / COUNT(pa.id) AS mean_overall_rating FROM Player p JOIN Player_Attributes pa ON p.player_api_id = pa.player_api_id WHERE strftime('%Y', p.birthday) < '1986' AND pa.overall_rating IS NOT NULL;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT SUM(pa.overall_rating) AS total, COUNT(pa.id) AS cnt, ROUND(CAST(SUM(pa.overall_rating) AS REAL) / COUNT(pa.id), 0) AS rounded_mean FROM Player p JOIN Player_Attributes pa ON p.player_api_id = pa.player_api_id WHERE strftime('%Y', p.birthday) < '1986' AND pa.overall_rating IS NOT NULL;\""
+      ]
+    },
+    {
+      "claim_id": 279,
+      "db_name": "california_schools",
+      "category": "",
+      "claim": "The school with the highest number of test takers whose total SAT scores are 1500 or higher is located in Los Angeles.",
+      "extra_info": "",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The school with the highest NumGE1500 (number of test takers with SAT scores >= 1500) is Lowell High in San Francisco with 561 such test takers. It is not located in Los Angeles. The second highest is Arcadia High (509) in Los Angeles County, but it is not the highest.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/california_schools.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/california_schools.sqlite\" \".schema satscores\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/california_schools.sqlite\" \".schema schools\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/california_schools.sqlite\" \"SELECT s.sname, s.cname, s.NumGE1500, sch.City FROM satscores s JOIN schools sch ON s.cds = sch.CDSCode WHERE s.NumGE1500 IS NOT NULL ORDER BY s.NumGE1500 DESC LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/california_schools.sqlite\" \"SELECT s.sname, s.dname, s.cname, s.rtype, s.NumGE1500, sch.City FROM satscores s JOIN schools sch ON s.cds = sch.CDSCode WHERE s.NumGE1500 IS NOT NULL ORDER BY s.NumGE1500 DESC LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/california_schools.sqlite\" \"SELECT s.sname, s.dname, s.cname, s.rtype, s.NumGE1500, sch.City FROM satscores s JOIN schools sch ON s.cds = sch.CDSCode WHERE s.NumGE1500 IS NOT NULL AND s.rtype = 'S' ORDER BY s.NumGE1500 DESC LIMIT 10;\""
+      ]
+    },
+    {
+      "claim_id": 1842,
+      "db_name": "toxicology",
+      "category": "",
+      "claim": "There are 291 distinct molecules that have a double bond type.",
+      "extra_info": "double bond refers to bond_type = ' = '; label = '+' mean molecules are carcinogenic;",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states there are 291 distinct molecules with a double bond type. Querying the database for COUNT(DISTINCT molecule_id) FROM bond WHERE bond_type = '=' returns 370, which directly contradicts the claimed number of 291.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(DISTINCT molecule_id) FROM bond WHERE bond_type = ' = ';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT DISTINCT bond_type, LENGTH(bond_type), HEX(bond_type) FROM bond;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(DISTINCT molecule_id) FROM bond WHERE bond_type = '=';\""
+      ]
+    },
+    {
+      "claim_id": 1937,
+      "db_name": "toxicology",
+      "category": "",
+      "claim": "All molecules that contain triple-bonded hydrogen atoms are labeled carcinogenic.",
+      "extra_info": "hydrogen refers to element = 'h'; label = '+' mean molecules are carcinogenic; triple bond refers to bond_type = '#'; percentage = DIVIDE(SUM(label = '+'), COUNT(molecule_id)) * 100.0 where element = 'h' AND bond_type = '#';",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "There are 2 molecules that contain both hydrogen atoms and triple bonds: TR377 (label='-', not carcinogenic) and TR499 (label='+', carcinogenic). Since TR377 is not labeled carcinogenic, the claim that ALL such molecules are carcinogenic is contradicted by the data.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT DISTINCT m.molecule_id, m.label\nFROM molecule m\nJOIN atom a ON a.molecule_id = m.molecule_id\nJOIN bond b ON b.molecule_id = m.molecule_id\nJOIN connected c ON c.bond_id = b.bond_id\nWHERE a.element = 'h'\n  AND b.bond_type = '#'\n  AND (c.atom_id = a.atom_id OR c.atom_id2 = a.atom_id)\nORDER BY m.molecule_id;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT DISTINCT m.molecule_id, m.label\nFROM molecule m\nWHERE m.molecule_id IN (\n    SELECT molecule_id FROM atom WHERE element = 'h'\n)\nAND m.molecule_id IN (\n    SELECT molecule_id FROM bond WHERE bond_type = '#'\n)\nORDER BY m.molecule_id;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT DISTINCT a.atom_id, a.element, b.bond_type, m.label, m.molecule_id\nFROM atom a\nJOIN connected c ON (c.atom_id = a.atom_id OR c.atom_id2 = a.atom_id)\nJOIN bond b ON b.bond_id = c.bond_id\nWHERE a.element = 'h' AND b.bond_type = '#';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT DISTINCT a.atom_id, a.element, b.bond_type, mo.label, mo.molecule_id\nFROM atom a\nJOIN connected c ON (c.atom_id = a.atom_id OR c.atom_id2 = a.atom_id)\nJOIN bond b ON b.bond_id = c.bond_id\nJOIN molecule mo ON mo.molecule_id = a.molecule_id\nWHERE a.element = 'h' AND b.bond_type = '#';\n\""
+      ]
+    },
+    {
+      "claim_id": 16378,
+      "db_name": "debit_card_specializing",
+      "category": "OUT-OF-SCHEMA",
+      "claim": "Exactly seven gas stations in the Czech Republic represented in the dataset offered on-site car wash services during the period after 2012-01-01.",
+      "extra_info": "Czech Republic can be represented as the Country value in the gasstations table is 'CZE'",
+      "actual": "NOT ENOUGH INFO",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states exactly seven Czech gas stations offered car wash services after 2012-01-01. Using transaction data for car wash related products (e.g., 'Myt\u00ed vozidel'/Vehicle cleaning) at Czech gas stations (Country='CZE') after 2012-01-01, the database shows 33 distinct gas stations with such transactions, not 7. The claim is contradicted by the data.",
+      "error_type": "FALSE_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT DISTINCT Description FROM products;\" ",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT DISTINCT Segment FROM gasstations;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT ProductID, Description FROM products WHERE Description LIKE '%wash%' OR Description LIKE '%clean%' OR Description LIKE '%Myt\u00ed%' OR Description LIKE '%myt\u00ed%' OR Description LIKE '%Um\u00fdv%' OR Description LIKE '%um\u00fdv%' OR Description LIKE '%Um\u00fdvanie%';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT COUNT(DISTINCT t.GasStationID) FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID JOIN products p ON t.ProductID = p.ProductID WHERE g.Country = 'CZE' AND t.Date > '2012-01-01' AND (p.Description LIKE '%wash%' OR p.Description LIKE '%clean%' OR p.Description LIKE '%Myt\u00ed%' OR p.Description LIKE '%Um\u00fdv%' OR p.Description LIKE '%Um\u00fdvanie%');\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT COUNT(DISTINCT t.GasStationID) FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.Country = 'CZE' AND t.Date > '2012-01-01' AND t.ProductID = 15;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT COUNT(DISTINCT t.GasStationID) FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.Country = 'CZE' AND t.Date > '2012-01-01' AND t.ProductID IN (15, 132, 262, 263, 264, 340, 341, 351);\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT DISTINCT t.GasStationID FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.Country = 'CZE' AND t.Date > '2012-01-01' AND t.ProductID IN (15, 132, 262, 263, 264, 340, 341, 351) ORDER BY t.GasStationID;\""
+      ]
+    },
+    {
+      "claim_id": 5441,
+      "db_name": "european_football_2",
+      "category": "",
+      "claim": "There are 3,594 players with overall ratings from 60 up to but not including 65 who have a low defensive work rate.",
+      "extra_info": "overall_rating > = 60 AND overall_rating < 65; players whose going to be in all of your attack moves instead of defensing refers to defensive_work_rate = 'low';",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states there are 3,594 players with overall_rating >= 60 and < 65 and defensive_work_rate = 'low'. Querying the database shows 619 distinct players matching these criteria (or 2,708 total attribute rows). Neither count matches the claimed 3,594, so the claim is contradicted by the data.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Player_Attributes\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT COUNT(DISTINCT player_api_id) FROM Player_Attributes WHERE overall_rating >= 60 AND overall_rating < 65 AND defensive_work_rate = 'low';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT DISTINCT defensive_work_rate FROM Player_Attributes WHERE defensive_work_rate LIKE '%low%' OR defensive_work_rate LIKE '%Low%';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT COUNT(*) FROM Player_Attributes WHERE overall_rating >= 60 AND overall_rating < 65 AND defensive_work_rate = 'low';\""
+      ]
+    },
+    {
+      "claim_id": 1858,
+      "db_name": "toxicology",
+      "category": "SUBJECTIVE",
+      "claim": "The presence of 442 sulfur-free, no-double-bond molecules indicates an overrepresentation of chemically inert compounds in this collection.",
+      "extra_info": "double bond refers to bond_type = ' = '; bond_type ! = ' = '; sulphur refers to element = 's'",
+      "actual": "NOT ENOUGH INFO",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states there are 442 sulfur-free, no-double-bond molecules. Querying the database for molecules that have no sulfur atoms (element = 's') and no double bonds (bond_type = '=') yields only 50 molecules, not 442. No reasonable interpretation of the query (sulfur-free only: 283, no-double-bond only: 52, total molecules: 343) produces 442. The numerical assertion is directly contradicted by the data. Additionally, the characterization of these as 'chemically inert' and 'overrepresented' involves subjective judgment not verifiable from the database, but the numerical contradiction alone is sufficient.",
+      "error_type": "FALSE_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT COUNT(*) FROM molecule m\nWHERE m.molecule_id NOT IN (\n    SELECT DISTINCT molecule_id FROM atom WHERE element = 's'\n)\nAND m.molecule_id NOT IN (\n    SELECT DISTINCT molecule_id FROM bond WHERE bond_type = ' = '\n);\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT DISTINCT bond_type FROM bond;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT DISTINCT element FROM atom;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT COUNT(*) FROM molecule m\nWHERE m.molecule_id NOT IN (\n    SELECT DISTINCT molecule_id FROM atom WHERE element = 's'\n)\nAND m.molecule_id NOT IN (\n    SELECT DISTINCT molecule_id FROM bond WHERE bond_type = '='\n);\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(*) FROM molecule;\" ",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(DISTINCT molecule_id) FROM atom WHERE element = 's';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(DISTINCT molecule_id) FROM bond WHERE bond_type = '=';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT COUNT(DISTINCT molecule_id) FROM bond WHERE bond_type = '=';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT COUNT(DISTINCT m.molecule_id) FROM molecule m\nJOIN bond b ON m.molecule_id = b.molecule_id\nWHERE b.bond_type = '=';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(DISTINCT molecule_id) FROM bond;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT COUNT(*) FROM molecule m\nWHERE NOT EXISTS (\n    SELECT 1 FROM atom a WHERE a.molecule_id = m.molecule_id AND a.element = 's'\n)\nAND NOT EXISTS (\n    SELECT 1 FROM bond b WHERE b.molecule_id = m.molecule_id AND b.bond_type = '='\n);\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\n-- Molecules without sulfur\nSELECT COUNT(*) FROM molecule m\nWHERE NOT EXISTS (SELECT 1 FROM atom a WHERE a.molecule_id = m.molecule_id AND a.element = 's');\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\n-- Molecules without double bonds\nSELECT COUNT(*) FROM molecule m\nWHERE NOT EXISTS (SELECT 1 FROM bond b WHERE b.molecule_id = m.molecule_id AND b.bond_type = '=');\n\""
+      ]
+    },
+    {
+      "claim_id": 1299,
+      "db_name": "toxicology",
+      "category": "SUBJECTIVE",
+      "claim": "An average oxygen atom count of approximately 116.65 for molecules limited to single bonds is implausibly high and suggests poor curation quality.",
+      "extra_info": "single-bonded molecules refers to bond_type = '-' ; average number of oxygen atom = AVG(element = 'o')",
+      "actual": "NOT ENOUGH INFO",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states the average oxygen atom count for single-bond-only molecules (bond_type = '-') is approximately 116.65. However, querying the database shows the actual average is 1.5 (counting oxygen atoms per molecule) or ~0.08 (as a proportion of all atoms). The value of 116.65 is completely contradicted by the data.",
+      "error_type": "FALSE_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT AVG(oxygen_count) \nFROM (\n  SELECT a.molecule_id, SUM(CASE WHEN a.element = 'o' THEN 1 ELSE 0 END) as oxygen_count\n  FROM atom a\n  WHERE a.molecule_id IN (\n    SELECT DISTINCT b.molecule_id \n    FROM bond b \n    GROUP BY b.molecule_id \n    HAVING SUM(CASE WHEN b.bond_type != '-' THEN 1 ELSE 0 END) = 0\n  )\n  GROUP BY a.molecule_id\n);\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT COUNT(DISTINCT b.molecule_id) \nFROM bond b \nGROUP BY b.molecule_id \nHAVING SUM(CASE WHEN b.bond_type != '-' THEN 1 ELSE 0 END) = 0;\" | wc -l",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT COUNT(*) FROM (\n  SELECT b.molecule_id \n  FROM bond b \n  GROUP BY b.molecule_id \n  HAVING SUM(CASE WHEN b.bond_type <> '-' THEN 1 ELSE 0 END) = 0\n);\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"\nSELECT AVG(element = 'o')\nFROM atom\nWHERE molecule_id IN (\n  SELECT molecule_id FROM bond\n  GROUP BY molecule_id\n  HAVING SUM(CASE WHEN bond_type <> '-' THEN 1 ELSE 0 END) = 0\n);\""
+      ]
+    },
+    {
+      "claim_id": 4806,
+      "db_name": "formula_1",
+      "category": "",
+      "claim": "The record holder's full name is Vitantonio Liuzzi, with forename Vitantonio and surname Liuzzi.",
+      "extra_info": "",
+      "actual": "ENTAILED",
+      "predicted": "NOT ENOUGH INFO",
+      "reasoning": "The database does not have a concept of 'record holder.' While a driver named Vitantonio Liuzzi (forename: Vitantonio, surname: Liuzzi) exists in the drivers table (driverId=24), there is no table or column designating any driver as a 'record holder.' Without knowing which record is being referenced, the claim cannot be fully verified.",
+      "error_type": "MISSED_ENTAILMENT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema drivers\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT * FROM drivers WHERE forename = 'Vitantonio' OR surname = 'Liuzzi';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema lapTimes\" && echo \"---\" && sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema results\" && echo \"---\" && sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema pitStops\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT d.forename, d.surname, lt.milliseconds, lt.time FROM lapTimes lt JOIN drivers d ON lt.driverId = d.driverId ORDER BY lt.milliseconds ASC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT d.forename, d.surname, lt.milliseconds, lt.time FROM lapTimes lt JOIN drivers d ON lt.driverId = d.driverId ORDER BY lt.milliseconds DESC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT d.forename, d.surname, r.fastestLapSpeed FROM results r JOIN drivers d ON r.driverId = d.driverId WHERE r.fastestLapSpeed IS NOT NULL AND r.fastestLapSpeed != '' ORDER BY CAST(r.fastestLapSpeed AS REAL) DESC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT d.forename, d.surname, r.fastestLapSpeed FROM results r JOIN drivers d ON r.driverId = d.driverId WHERE r.fastestLapSpeed IS NOT NULL AND r.fastestLapSpeed != '' ORDER BY CAST(r.fastestLapSpeed AS REAL) DESC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT d.forename, d.surname, r.fastestLapSpeed FROM results r JOIN drivers d ON r.driverId = d.driverId WHERE r.fastestLapSpeed IS NOT NULL AND r.fastestLapSpeed <> '' ORDER BY CAST(r.fastestLapSpeed AS REAL) DESC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT d.driverId, d.forename, d.surname, COUNT(*) as race_count FROM results r JOIN drivers d ON r.driverId = d.driverId GROUP BY d.driverId ORDER BY race_count DESC LIMIT 5;\""
+      ]
+    },
+    {
+      "claim_id": 4204,
+      "db_name": "superhero",
+      "category": "",
+      "claim": "Surtur is the tallest superhero.",
+      "extra_info": "who refers to superhero_name; tallest superhero refers to MAX(height_cm);",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "Surtur has a height of 30,480 cm, but Ymir also has the same height of 30,480 cm. Since the claim states Surtur is 'the tallest superhero' (implying uniquely the tallest), and there is a tie with Ymir, the claim is contradicted.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".schema superhero\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"SELECT superhero_name, height_cm FROM superhero WHERE height_cm = (SELECT MAX(height_cm) FROM superhero);\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"SELECT superhero_name, height_cm FROM superhero WHERE superhero_name = 'Surtur';\""
+      ]
+    },
+    {
+      "claim_id": 5325,
+      "db_name": "formula_1",
+      "category": "",
+      "claim": "The quickest lap on record is exactly two minutes flat (2:00.000).",
+      "extra_info": "",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The fastest lap time in the database is 1:07.411 (67,411 milliseconds), found in both the lapTimes and results tables. The claim states the quickest lap is exactly 2:00.000 (120,000 milliseconds), which is significantly slower than the actual fastest lap. The data directly contradicts the claim.",
+      "error_type": "WRONG_VALUE",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema lapTimes\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema results\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT MIN(milliseconds), time FROM lapTimes WHERE milliseconds IS NOT NULL ORDER BY milliseconds LIMIT 1;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT MIN(milliseconds), fastestLapTime FROM results WHERE milliseconds IS NOT NULL;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT fastestLapTime, milliseconds FROM results WHERE fastestLapTime IS NOT NULL AND fastestLapTime != '' ORDER BY fastestLapTime LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT time, milliseconds FROM lapTimes WHERE milliseconds = (SELECT MIN(milliseconds) FROM lapTimes);\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT fastestLapTime FROM results WHERE fastestLapTime IS NOT NULL AND fastestLapTime != '' ORDER BY fastestLapTime LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT time, milliseconds FROM lapTimes WHERE milliseconds = (SELECT MIN(milliseconds) FROM lapTimes);\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT fastestLapTime FROM results WHERE fastestLapTime IS NOT NULL AND fastestLapTime <> '' ORDER BY fastestLapTime LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT time, milliseconds FROM lapTimes WHERE milliseconds = (SELECT MIN(milliseconds) FROM lapTimes);\""
+      ]
+    },
+    {
+      "claim_id": 5023,
+      "db_name": "formula_1",
+      "category": "",
+      "claim": "The total count of French-driver lap performances faster than 02:00.00 is 24,465.",
+      "extra_info": "lap time less than 02:00.00 refers to seconds < 120;",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states the total count of French-driver lap performances faster than 02:00.00 (milliseconds < 120000) is 24,465. The actual count from the database is 24,462, which differs by 3. Therefore the claim is contradicted.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema drivers\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema lapTimes\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT COUNT(*) FROM lapTimes lt JOIN drivers d ON lt.driverId = d.driverId WHERE d.nationality = 'French' AND lt.milliseconds < 120000;\""
+      ]
+    },
+    {
+      "claim_id": 6825,
+      "db_name": "thrombosis_prediction",
+      "category": "",
+      "claim": "The number of patients with normal anti-SM who do not have thrombosis is 7.",
+      "extra_info": "normal anti-SM refers to SM IN('-', '+-'); SM = 'negative' means '-'; SM = '0' means '+-'; SM = '1' means '+'; does not have thrombosis refers to Thrombosis = 0;",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states there are 7 patients with normal anti-SM (SM in ('negative','0')) and no thrombosis (Thrombosis = 0), but the query returns 6 distinct patients matching these criteria.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT DISTINCT SM FROM Laboratory ORDER BY SM;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT DISTINCT Thrombosis FROM Examination ORDER BY Thrombosis;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT COUNT(DISTINCT L.ID)\nFROM Laboratory L\nINNER JOIN Examination E ON L.ID = E.ID\nWHERE L.SM IN ('negative', '0')\nAND E.Thrombosis = 0;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT DISTINCT L.ID\nFROM Laboratory L\nINNER JOIN Examination E ON L.ID = E.ID\nWHERE L.SM IN ('negative', '0')\nAND E.Thrombosis = 0;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT COUNT(DISTINCT L.ID)\nFROM Laboratory L\nINNER JOIN Examination E ON L.ID = E.ID\nWHERE (L.SM = 'negative' OR L.SM = '0')\nAND E.Thrombosis = 0;\n\""
+      ]
+    },
+    {
+      "claim_id": 825,
+      "db_name": "financial",
+      "category": "OUT-OF-SCHEMA",
+      "claim": "Loans to male borrowers during the period carried an average annual percentage rate below 6%.",
+      "extra_info": "Male refers to gender = 'M'",
+      "actual": "NOT ENOUGH INFO",
+      "predicted": "ENTAILED",
+      "reasoning": "The loan table does not have an explicit APR column, but APR can be derived from the amount, duration, and payments columns. For all loans to male borrowers (gender = 'M'), the total payments (payments \u00d7 duration) equal the loan amount exactly, implying 0% interest/APR. Since 0% is below 6%, the claim that the average APR for male borrowers is below 6% is supported by the data.",
+      "error_type": "FALSE_ENTAILMENT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema loan\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema client\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema disp\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema account\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT * FROM loan LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"PRAGMA table_info(loan);\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"\nSELECT \n    AVG((l.payments * l.duration - l.amount) / l.amount / (l.duration / 12.0) * 100) as approx_avg_annual_rate\nFROM loan l\nJOIN disp d ON l.account_id = d.account_id\nJOIN client c ON d.client_id = c.client_id\nWHERE c.gender = 'M' AND d.type = 'OWNER';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"\nSELECT l.loan_id, l.amount, l.duration, l.payments, l.payments * l.duration as total_paid, \n       (l.payments * l.duration - l.amount) as interest_total\nFROM loan l\nJOIN disp d ON l.account_id = d.account_id\nJOIN client c ON d.client_id = c.client_id\nWHERE c.gender = 'M' AND d.type = 'OWNER'\nLIMIT 10;\n\""
+      ]
+    },
+    {
+      "claim_id": 5470,
+      "db_name": "european_football_2",
+      "category": "",
+      "claim": "In the 2016 season, Piast Gliwice had the lowest number of home defeats among all teams.",
+      "extra_info": "home team lost the matches refers to SUBTRACT(home_team_goal, away_team_goal) < 0; 2016 season refers to season = '2015/2016';",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "In the 2015/2016 season, Piast Gliwice had 1 home defeat. However, at least 3 teams (Borussia Dortmund, Napoli, RSC Anderlecht) had 0 home defeats, meaning Piast Gliwice did not have the lowest number of home defeats among all teams.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Match\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Team\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"\nSELECT T.team_long_name, COUNT(*) AS home_defeats\nFROM Match M\nJOIN Team T ON M.home_team_api_id = T.team_api_id\nWHERE M.season = '2015/2016'\n  AND (M.home_team_goal - M.away_team_goal) < 0\nGROUP BY T.team_long_name\nORDER BY home_defeats ASC\nLIMIT 20;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"\nSELECT T.team_long_name, COUNT(*) AS home_defeats\nFROM Match M\nJOIN Team T ON M.home_team_api_id = T.team_api_id\nWHERE M.season = '2015/2016'\n  AND (M.home_team_goal - M.away_team_goal) < 0\nGROUP BY T.team_long_name\nHAVING T.team_long_name LIKE '%Piast%';\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"\n-- Find teams that played home matches in 2015/2016 but had 0 home defeats\nSELECT T.team_long_name, 0 AS home_defeats\nFROM Match M\nJOIN Team T ON M.home_team_api_id = T.team_api_id\nWHERE M.season = '2015/2016'\nGROUP BY T.team_long_name\nHAVING T.team_long_name NOT IN (\n    SELECT T2.team_long_name\n    FROM Match M2\n    JOIN Team T2 ON M2.home_team_api_id = T2.team_api_id\n    WHERE M2.season = '2015/2016'\n      AND (M2.home_team_goal - M2.away_team_goal) < 0\n    GROUP BY T2.team_long_name\n)\nORDER BY T.team_long_name;\n\""
+      ]
+    },
+    {
+      "claim_id": 16103,
+      "db_name": "student_club",
+      "category": "",
+      "claim": "Among members with expenses across multiple events, rec4BLdZHS2Blfp4v had the highest cost.",
+      "extra_info": "paid the most amount refers to for expense incurred in more than one event refers to MAX(cost where COUNT(event_id) > 1)",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "Among members with expenses across multiple events, rec4BLdZHS2Blfp4v had a max cost of $195.30, but recro8T1MPMwRadVH had the highest max cost at $295.12. Therefore, rec4BLdZHS2Blfp4v did NOT have the highest cost.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/student_club.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/student_club.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/student_club.sqlite\" \"\nSELECT e.link_to_member, MAX(e.cost) as max_cost\nFROM expense e\nJOIN budget b ON e.link_to_budget = b.budget_id\nWHERE e.link_to_member IN (\n    SELECT e2.link_to_member\n    FROM expense e2\n    JOIN budget b2 ON e2.link_to_budget = b2.budget_id\n    GROUP BY e2.link_to_member\n    HAVING COUNT(DISTINCT b2.link_to_event) > 1\n)\nGROUP BY e.link_to_member\nORDER BY max_cost DESC\nLIMIT 10;\n\""
+      ]
+    },
+    {
+      "claim_id": 1144,
+      "db_name": "financial",
+      "category": "",
+      "claim": "Client 617\u2019s aggregate payments in 1998 were less than 250,000.",
+      "extra_info": "",
+      "actual": "CONTRADICTED",
+      "predicted": "ENTAILED",
+      "reasoning": "Client 617 is linked to account 514 via the disp table. The sum of all payment (VYDAJ) transactions for this account in 1998 is 143,545, which is indeed less than 250,000, supporting the claim.",
+      "error_type": "MISSED_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema trans\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema account\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema disp\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema client\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT DISTINCT type, operation FROM trans LIMIT 20;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema order\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT * FROM client WHERE client_id = 617;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT d.client_id, d.account_id, d.type FROM disp d WHERE d.client_id = 617;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT SUM(amount) FROM trans WHERE account_id = 514 AND date LIKE '1998%' AND type = 'VYDAJ';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT SUM(amount) FROM trans WHERE account_id = 514 AND strftime('%Y', date) = '1998' AND type = 'VYDAJ';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT date, type, amount FROM trans WHERE account_id = 514 AND date LIKE '1998%' ORDER BY date LIMIT 20;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT SUM(amount) FROM trans WHERE account_id = 514 AND date LIKE '1998%' AND type IN ('VYDAJ', 'VYBER');\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT SUM(amount) FROM trans WHERE account_id = 514 AND date LIKE '1998%';\""
+      ]
+    },
+    {
+      "claim_id": 632,
+      "db_name": "financial",
+      "category": "",
+      "claim": "Account ID 9 is the only account identified as having the earliest trading date in 1995.",
+      "extra_info": "",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states Account ID 9 is the only account with the earliest trading date in 1995. However, the data shows that 315 accounts share the earliest trading date in 1995 (1995-01-01), not just account ID 9. Therefore, the uniqueness assertion is contradicted.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema account\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema trans\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT account_id, MIN(date) as earliest_date FROM trans WHERE date LIKE '1995%' GROUP BY account_id ORDER BY earliest_date ASC LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT MIN(date) FROM trans;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT COUNT(DISTINCT account_id) FROM trans WHERE date = (SELECT MIN(date) FROM trans WHERE date LIKE '1995%');\""
+      ]
+    },
+    {
+      "claim_id": 6995,
+      "db_name": "thrombosis_prediction",
+      "category": "",
+      "claim": "Among patients with a normal range of creatinine phosphokinase, 7 have a positive measure of the degree of coagulation.",
+      "extra_info": "normal range of creatinine phosphokinase refers to CPK < 250; positive measure of degree of coagulation refers to KCT = '+' or RVVT = '+' or LAC = '+' ;",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states that 7 patients with normal CPK (<250) have a positive coagulation measure (KCT='+' or RVVT='+' or LAC='+'). However, querying the database shows only 1 distinct patient meets both criteria. The number 7 corresponds to the number of laboratory records for that single patient, not 7 different patients. Since the claim says '7 have' referring to patients, this is contradicted by the data.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT COUNT(DISTINCT L.ID)\nFROM Laboratory L\nJOIN Examination E ON L.ID = E.ID\nWHERE L.CPK < 250\n  AND (E.KCT = '+' OR E.RVVT = '+' OR E.LAC = '+');\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT COUNT(*)\nFROM Laboratory L\nJOIN Examination E ON L.ID = E.ID\nWHERE L.CPK < 250\n  AND (E.KCT = '+' OR E.RVVT = '+' OR E.LAC = '+');\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT DISTINCT L.ID\nFROM Laboratory L\nJOIN Examination E ON L.ID = E.ID\nWHERE L.CPK < 250\n  AND (E.KCT = '+' OR E.RVVT = '+' OR E.LAC = '+');\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT COUNT(DISTINCT E.ID)\nFROM Examination E\nWHERE (E.KCT = '+' OR E.RVVT = '+' OR E.LAC = '+');\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT L.ID, L.Date, L.CPK, E.KCT, E.RVVT, E.LAC, E.[Examination Date]\nFROM Laboratory L\nJOIN Examination E ON L.ID = E.ID\nWHERE L.CPK < 250\n  AND (E.KCT = '+' OR E.RVVT = '+' OR E.LAC = '+')\nLIMIT 20;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT COUNT(DISTINCT E.ID)\nFROM Examination E\nWHERE (E.KCT = '+' OR E.RVVT = '+' OR E.LAC = '+')\n  AND E.ID IN (\n    SELECT ID FROM Laboratory WHERE CPK IS NOT NULL GROUP BY ID HAVING MAX(CPK) < 250\n  );\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT COUNT(DISTINCT E.ID)\nFROM Examination E\nWHERE (E.KCT = '+' OR E.RVVT = '+' OR E.LAC = '+')\n  AND E.ID IN (\n    SELECT DISTINCT ID FROM Laboratory WHERE CPK < 250\n  );\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"\nSELECT COUNT(DISTINCT E.ID)\nFROM Examination E\nJOIN Laboratory L ON E.ID = L.ID AND E.[Examination Date] = L.Date\nWHERE L.CPK < 250\n  AND (E.KCT = '+' OR E.RVVT = '+' OR E.LAC = '+');\n\""
+      ]
+    },
+    {
+      "claim_id": 2896,
+      "db_name": "codebase_community",
+      "category": "",
+      "claim": "In the Codebase Community, the post-to-vote ratio for user No.24 is 3:1.",
+      "extra_info": "user no. 24 refers to UserId = OwnerUserId = '24'; times of his/her post than votes = Divide (Count(post.Id), Count(votes.Id))",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "User 24 has 3 posts and 8 votes, giving a post-to-vote ratio of 3:8 (0.375), not 3:1 as claimed.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \".schema posts\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \".schema votes\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \"SELECT COUNT(Id) FROM posts WHERE OwnerUserId = 24;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \"SELECT COUNT(Id) FROM votes WHERE UserId = 24;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \"SELECT CAST(COUNT(p.Id) AS REAL) / COUNT(v.Id) FROM posts p, votes v WHERE p.OwnerUserId = 24 AND v.UserId = 24;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \"SELECT (SELECT COUNT(Id) FROM posts WHERE OwnerUserId = 24) * 1.0 / (SELECT COUNT(Id) FROM votes WHERE UserId = 24);\""
+      ]
+    },
+    {
+      "claim_id": 5324,
+      "db_name": "formula_1",
+      "category": "",
+      "claim": "Among all recorded circuit lap records, the fastest time is 2:00.000.",
+      "extra_info": "",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The fastest recorded lap time in the lapTimes table is 1:07.411 (67,411 milliseconds), which is significantly faster than 2:00.000 (120,000 milliseconds). The claim that the fastest time is 2:00.000 is directly contradicted by the data.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema circuits\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema lapTimes\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema races\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT MIN(milliseconds), time FROM lapTimes WHERE milliseconds IS NOT NULL ORDER BY milliseconds ASC LIMIT 1;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT time, milliseconds FROM lapTimes WHERE milliseconds IS NOT NULL ORDER BY milliseconds ASC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT time, milliseconds FROM lapTimes WHERE time LIKE '2:00%' LIMIT 5;\""
+      ]
+    },
+    {
+      "claim_id": 6038,
+      "db_name": "european_football_2",
+      "category": "",
+      "claim": "Rounded to two decimals, Italy's players have an average height of 181.69.",
+      "extra_info": "average heights refers to Avg(height); Italy is name of country",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The average height of Italy's players (those appearing in Italian league matches), rounded to two decimal places, is 182.33, not 181.69 as claimed.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Country\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Player\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Match\" | head -30",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema League\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT * FROM Country;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Match\" | grep -i player",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"\nSELECT ROUND(AVG(P.height), 2) AS avg_height\nFROM Player P\nWHERE P.player_api_id IN (\n    SELECT home_player_1 FROM Match WHERE country_id = 10257 UNION\n    SELECT home_player_2 FROM Match WHERE country_id = 10257 UNION\n    SELECT home_player_3 FROM Match WHERE country_id = 10257 UNION\n    SELECT home_player_4 FROM Match WHERE country_id = 10257 UNION\n    SELECT home_player_5 FROM Match WHERE country_id = 10257 UNION\n    SELECT home_player_6 FROM Match WHERE country_id = 10257 UNION\n    SELECT home_player_7 FROM Match WHERE country_id = 10257 UNION\n    SELECT home_player_8 FROM Match WHERE country_id = 10257 UNION\n    SELECT home_player_9 FROM Match WHERE country_id = 10257 UNION\n    SELECT home_player_10 FROM Match WHERE country_id = 10257 UNION\n    SELECT home_player_11 FROM Match WHERE country_id = 10257 UNION\n    SELECT away_player_1 FROM Match WHERE country_id = 10257 UNION\n    SELECT away_player_2 FROM Match WHERE country_id = 10257 UNION\n    SELECT away_player_3 FROM Match WHERE country_id = 10257 UNION\n    SELECT away_player_4 FROM Match WHERE country_id = 10257 UNION\n    SELECT away_player_5 FROM Match WHERE country_id = 10257 UNION\n    SELECT away_player_6 FROM Match WHERE country_id = 10257 UNION\n    SELECT away_player_7 FROM Match WHERE country_id = 10257 UNION\n    SELECT away_player_8 FROM Match WHERE country_id = 10257 UNION\n    SELECT away_player_9 FROM Match WHERE country_id = 10257 UNION\n    SELECT away_player_10 FROM Match WHERE country_id = 10257 UNION\n    SELECT away_player_11 FROM Match WHERE country_id = 10257\n);\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Team\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"\nSELECT L.id, L.name FROM League L WHERE L.country_id = 10257;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"\nSELECT ROUND(AVG(height), 2)\nFROM Player\nWHERE player_api_id IN (\n    SELECT DISTINCT player_api_id FROM (\n        SELECT home_player_1 AS player_api_id FROM Match WHERE country_id = 10257\n        UNION ALL SELECT home_player_2 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT home_player_3 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT home_player_4 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT home_player_5 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT home_player_6 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT home_player_7 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT home_player_8 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT home_player_9 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT home_player_10 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT home_player_11 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT away_player_1 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT away_player_2 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT away_player_3 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT away_player_4 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT away_player_5 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT away_player_6 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT away_player_7 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT away_player_8 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT away_player_9 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT away_player_10 FROM Match WHERE country_id = 10257\n        UNION ALL SELECT away_player_11 FROM Match WHERE country_id = 10257\n    ) WHERE player_api_id IS NOT NULL\n);\n\""
+      ]
+    },
+    {
+      "claim_id": 4004,
+      "db_name": "superhero",
+      "category": "COUNTERFACTUAL",
+      "claim": "If all non-human races were removed from the dataset, the ratio of total superheroes to those with no skin colour would be lower.",
+      "extra_info": "average = DIVIDE(COUNT(superhero.id), SUM(skin_colour_id = 1)); no skin colour refers to skin_colour_id WHERE colour.id = 1;",
+      "actual": "NOT ENOUGH INFO",
+      "predicted": "ENTAILED",
+      "reasoning": "The overall ratio of total superheroes to those with no skin colour (skin_colour_id=1) is 750/681 \u2248 1.1013. When filtering to only Human race (race_id=24), the ratio becomes 219/211 \u2248 1.0379, which is lower. Even including all human-variant races, the ratio is 242/228 \u2248 1.0614, still lower. The claim that removing non-human races would lower this ratio is supported by the data.",
+      "error_type": "FALSE_ENTAILMENT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".schema superhero\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".schema race\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".schema colour\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"SELECT * FROM race WHERE race LIKE '%uman%';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"SELECT * FROM colour WHERE id = 1;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"\n-- Overall ratio: total superheroes / those with skin_colour_id = 1\nSELECT \n  COUNT(id) AS total,\n  SUM(CASE WHEN skin_colour_id = 1 THEN 1 ELSE 0 END) AS no_skin_colour,\n  CAST(COUNT(id) AS REAL) / SUM(CASE WHEN skin_colour_id = 1 THEN 1 ELSE 0 END) AS ratio_all\nFROM superhero;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"\n-- Ratio for human-only (race_id = 24, 'Human')\nSELECT \n  COUNT(id) AS total,\n  SUM(CASE WHEN skin_colour_id = 1 THEN 1 ELSE 0 END) AS no_skin_colour,\n  CAST(COUNT(id) AS REAL) / SUM(CASE WHEN skin_colour_id = 1 THEN 1 ELSE 0 END) AS ratio_human_only\nFROM superhero\nWHERE race_id = 24;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"\n-- Ratio for all human-variant races\nSELECT \n  COUNT(id) AS total,\n  SUM(CASE WHEN skin_colour_id = 1 THEN 1 ELSE 0 END) AS no_skin_colour,\n  CAST(COUNT(id) AS REAL) / SUM(CASE WHEN skin_colour_id = 1 THEN 1 ELSE 0 END) AS ratio_human_variants\nFROM superhero\nWHERE race_id IN (24, 25, 26, 27, 28, 29, 30, 31, 32);\n\""
+      ]
+    },
+    {
+      "claim_id": 15629,
+      "db_name": "formula_1",
+      "category": "",
+      "claim": "The youngest Japanese Formula 1 driver is 39-year-old Kamui Kobayashi.",
+      "extra_info": "date of birth refers to drivers.dob; The larger the birthday value, the younger the person is, and vice versa; Japanese refers to nationality = 'Japanese'; age = YEAR(CURRENT_TIMESTAMP) - YEAR(dob);",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "Kamui Kobayashi is indeed the youngest Japanese F1 driver (born 1986-09-13, the most recent DOB among Japanese drivers). However, the claim states he is 39 years old, while using the age formula YEAR(CURRENT_TIMESTAMP) - YEAR(dob) = 2026 - 1986 = 40. The age is off by one year, so the claim is contradicted.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema drivers\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT driverId, forename, surname, dob, nationality FROM drivers WHERE nationality = 'Japanese' ORDER BY dob DESC;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT forename, surname, dob, (strftime('%Y', 'now') - strftime('%Y', dob)) as age FROM drivers WHERE nationality = 'Japanese' ORDER BY dob DESC LIMIT 1;\""
+      ]
+    },
+    {
+      "claim_id": 3986,
+      "db_name": "superhero",
+      "category": "",
+      "claim": "The hero with the highest strength attribute is Richard Milhouse Jones.",
+      "extra_info": "highest attribute in strength refers to MAX(attribute_value) WHERE attribute_name = 'strength';",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states 'The hero with the highest strength attribute is Richard Milhouse Jones,' implying a unique hero. While Richard Milhouse Jones (A-Bomb) does have a strength attribute value of 100 (the maximum), there are 63 heroes tied at that maximum value. The definite article 'the' implies uniqueness, making the claim contradicted by the data.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".schema hero_attribute\" 2>/dev/null; sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".schema superhero\" 2>/dev/null; sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".schema attribute\" 2>/dev/null",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"SELECT s.superhero_name, s.full_name, ha.attribute_value FROM superhero s JOIN hero_attribute ha ON s.id = ha.hero_id JOIN attribute a ON ha.attribute_id = a.id WHERE a.attribute_name = 'Strength' ORDER BY ha.attribute_value DESC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"SELECT DISTINCT attribute_name FROM attribute;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"SELECT COUNT(*) FROM superhero s JOIN hero_attribute ha ON s.id = ha.hero_id JOIN attribute a ON ha.attribute_id = a.id WHERE a.attribute_name = 'Strength' AND ha.attribute_value = 100;\""
+      ]
+    },
+    {
+      "claim_id": 660,
+      "db_name": "financial",
+      "category": "",
+      "claim": "The gender of the oldest client who opened an account in the highest average salary branch is recorded as M.",
+      "extra_info": "Earlier birthdate refers to older age; A11 refers to average salary",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The district with the highest average salary (A11) is district 1 (A11=12541). The oldest client linked to an account in that district is client 1494, born 1915-03-22, whose gender is 'F', not 'M' as the claim asserts.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema account\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema client\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema district\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema disp\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT district_id, A11 FROM district ORDER BY A11 DESC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"\nSELECT c.client_id, c.gender, c.birth_date, a.account_id, a.district_id\nFROM client c\nJOIN disp d ON c.client_id = d.client_id\nJOIN account a ON d.account_id = a.account_id\nWHERE a.district_id = (SELECT district_id FROM district ORDER BY A11 DESC LIMIT 1)\nORDER BY c.birth_date ASC\nLIMIT 5;\n\""
+      ]
+    },
+    {
+      "claim_id": 1400,
+      "db_name": "toxicology",
+      "category": "",
+      "claim": "100% of carcinogenic-type molecules do not contain fluorine.",
+      "extra_info": "label = '+' mean molecules are carcinogenic; contain fluorine refers to element = 'f'; percentage = DIVIDE(SUM(element = 'f') * 100, COUNT(molecule_id)) where label = '+'; Should consider the distinct atoms when counting;",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states that 100% of carcinogenic molecules (label = '+') do not contain fluorine (element = 'f'). However, querying the database reveals that out of 152 carcinogenic molecules, 1 contains fluorine (approximately 0.66%). Since at least one carcinogenic molecule does contain fluorine, the claim that 100% do not is contradicted by the data.",
+      "error_type": "WRONG_VALUE",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(DISTINCT a.molecule_id) FROM atom a JOIN molecule m ON a.molecule_id = m.molecule_id WHERE m.label = '+' AND a.element = 'f';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(DISTINCT m.molecule_id) FROM molecule m WHERE m.label = '+';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT CAST(SUM(CASE WHEN a.element = 'f' THEN 1 ELSE 0 END) AS FLOAT) * 100.0 / COUNT(DISTINCT a.molecule_id) AS pct_with_fluorine FROM (SELECT DISTINCT molecule_id, element FROM atom) a JOIN molecule m ON a.molecule_id = m.molecule_id WHERE m.label = '+';\""
+      ]
+    },
+    {
+      "claim_id": 4154,
+      "db_name": "superhero",
+      "category": "",
+      "claim": "Silver Surfer held the maximum Speed value, making him the fastest hero.",
+      "extra_info": "which hero refers to superhero_name; fastest refers to MAX(attribute_value) WHERE attribute_name = 'Speed';",
+      "actual": "CONTRADICTED",
+      "predicted": "ENTAILED",
+      "reasoning": "Silver Surfer has a Speed attribute value of 100, which is indeed the maximum Speed value in the database. While 40 heroes share this maximum Speed value, the claim states Silver Surfer 'held the maximum Speed value,' which is factually correct. The claim does not assert he is the only hero with the maximum speed, just that he held it.",
+      "error_type": "MISSED_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".schema superhero\" 2>/dev/null; sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".schema hero_attribute\" 2>/dev/null; sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \".schema attribute\" 2>/dev/null",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"SELECT s.superhero_name, ha.attribute_value FROM superhero s JOIN hero_attribute ha ON s.id = ha.hero_id JOIN attribute a ON ha.attribute_id = a.id WHERE a.attribute_name = 'Speed' ORDER BY ha.attribute_value DESC LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"SELECT MAX(ha.attribute_value) FROM hero_attribute ha JOIN attribute a ON ha.attribute_id = a.id WHERE a.attribute_name = 'Speed';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"SELECT s.superhero_name, ha.attribute_value FROM superhero s JOIN hero_attribute ha ON s.id = ha.hero_id JOIN attribute a ON ha.attribute_id = a.id WHERE a.attribute_name = 'Speed' AND s.superhero_name = 'Silver Surfer';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/superhero.sqlite\" \"SELECT COUNT(*) FROM hero_attribute ha JOIN attribute a ON ha.attribute_id = a.id WHERE a.attribute_name = 'Speed' AND ha.attribute_value = 100;\""
+      ]
+    },
+    {
+      "claim_id": 7349,
+      "db_name": "student_club",
+      "category": "SUBJECTIVE",
+      "claim": "Among all club events, the Yearly Kickoff had the most eye-catching promotional materials.",
+      "extra_info": "Name of event refers to event_name; highest amount spent on advertisement refers to MAX(spent) where category = 'Advertisement'",
+      "actual": "NOT ENOUGH INFO",
+      "predicted": "ENTAILED",
+      "reasoning": "The hint maps 'most eye-catching promotional materials' to the highest advertisement spending (MAX(spent) where category = 'Advertisement'). The data shows that Yearly Kickoff has the highest advertisement spending at $122.06, which is the maximum among all club events, confirming the claim.",
+      "error_type": "FALSE_ENTAILMENT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/student_club.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/student_club.sqlite\" \".schema budget\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/student_club.sqlite\" \".schema event\"",
+        "sqlite3 -header -column \"/Users/david/workspace/claimdb/test_dbs/student_club.sqlite\" \"SELECT e.event_name, b.spent FROM budget b JOIN event e ON b.link_to_event = e.event_id WHERE b.category = 'Advertisement' ORDER BY b.spent DESC LIMIT 10;\""
+      ]
+    },
+    {
+      "claim_id": 6940,
+      "db_name": "thrombosis_prediction",
+      "category": "",
+      "claim": "Among patients with elevated total bilirubin, the count who exhibited a peripheral pattern on the ANA examination is 4.",
+      "extra_info": "total bilirubin is over the normal range refers to `T-BIL` > = 2.0; peripheral pattern is observed in the sheet of ANA examination refers to that ANA Pattern contains 'P';",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states that 4 patients have both elevated total bilirubin (T-BIL >= 2.0) and a peripheral pattern (ANA Pattern containing 'P'). However, querying the database shows only 1 distinct patient (ID 1180510) meets both criteria, not 4.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT COUNT(DISTINCT L.ID) FROM Laboratory L JOIN Examination E ON L.ID = E.ID WHERE L.\\`T-BIL\\` >= 2.0 AND E.\\`ANA Pattern\\` LIKE '%P%';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT DISTINCT L.ID, L.\\`T-BIL\\`, E.\\`ANA Pattern\\` FROM Laboratory L JOIN Examination E ON L.ID = E.ID WHERE L.\\`T-BIL\\` >= 2.0 AND E.\\`ANA Pattern\\` LIKE '%P%';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT DISTINCT E.ID, E.\\`ANA Pattern\\` FROM Examination E WHERE E.\\`ANA Pattern\\` LIKE '%P%';\" | head -30",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/thrombosis_prediction.sqlite\" \"SELECT DISTINCT ID FROM Laboratory WHERE \\`T-BIL\\` >= 2.0;\" | head -30"
+      ]
+    },
+    {
+      "claim_id": 5450,
+      "db_name": "european_football_2",
+      "category": "",
+      "claim": "The five top-performing players in crossing actions are identified by player IDs 38921, 38922, 38923, 38924, and 81218.",
+      "extra_info": "perform better in crossing actions refers to MAX(crossing)",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The top 5 players by MAX(crossing) are player_api_ids 32578, 30612, 23916 (all with 95), 30618 (94), and one of several tied at 93. None of the claimed player IDs (38921, 38922, 38923, 38924, 81218) appear in the top 5. In fact, only player 38922 exists in the data at all, with a max crossing of 79. The claim is directly contradicted by the data.",
+      "error_type": "INCORRECT_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Player_Attributes\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT player_api_id, MAX(crossing) as max_crossing FROM Player_Attributes GROUP BY player_api_id ORDER BY max_crossing DESC LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT player_api_id, MAX(crossing) as max_crossing FROM Player_Attributes WHERE player_api_id IN (38921, 38922, 38923, 38924, 81218) GROUP BY player_api_id ORDER BY max_crossing DESC;\""
+      ]
+    },
+    {
+      "claim_id": 6160,
+      "db_name": "european_football_2",
+      "category": "",
+      "claim": "Fewer than 20% of players are under 180 cm with an overall strength above 70.",
+      "extra_info": "percentage refers to DIVIDE(COUNT(height < 180 AND overall_rating > 70),COUNT(id)) * 100",
+      "actual": "CONTRADICTED",
+      "predicted": "ENTAILED",
+      "reasoning": "The percentage of player records with height < 180 cm and overall_rating > 70 is approximately 13.94% (25,648 out of 183,978), which is indeed fewer than 20%, supporting the claim.",
+      "error_type": "MISSED_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Player_Attributes\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \".schema Player\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT CAST(SUM(CASE WHEN P.height < 180 AND PA.overall_rating > 70 THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(P.id) AS percentage FROM Player P INNER JOIN Player_Attributes PA ON P.player_api_id = PA.player_api_id;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/european_football_2.sqlite\" \"SELECT COUNT(*) as total, SUM(CASE WHEN P.height < 180 AND PA.overall_rating > 70 THEN 1 ELSE 0 END) as matching FROM Player P INNER JOIN Player_Attributes PA ON P.player_api_id = PA.player_api_id;\""
+      ]
+    },
+    {
+      "claim_id": 7614,
+      "db_name": "debit_card_specializing",
+      "category": "SUBJECTIVE",
+      "claim": "Paying in euros is more convenient for KAM customers than using other currencies.",
+      "extra_info": "Percentage of KAM uses Euro = (Total of KAM uses Euro / Total of KAM) * 100%.",
+      "actual": "NOT ENOUGH INFO",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states paying in euros is more convenient for KAM customers than other currencies. Using the hint's interpretation (percentage of KAM using EUR), only 3.48% (71/2040) of KAM customers use EUR, while 96.52% (1969/2040) use CZK. The data shows EUR is far less prevalent among KAM customers than CZK, contradicting the claim that EUR is more convenient/preferred.",
+      "error_type": "FALSE_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT DISTINCT Segment FROM customers;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT DISTINCT Currency FROM customers;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT Currency, COUNT(*) as cnt FROM customers WHERE Segment = 'KAM' GROUP BY Currency;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT COUNT(*) as total_kam FROM customers WHERE Segment = 'KAM';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT ROUND(71.0 / 2040.0 * 100, 2) as pct_eur, ROUND(1969.0 / 2040.0 * 100, 2) as pct_czk;\""
+      ]
+    },
+    {
+      "claim_id": 15642,
+      "db_name": "formula_1",
+      "category": "",
+      "claim": "The total number of Michael Schumacher\u2019s victories at the Sepang International Circuit never exceeded five.",
+      "extra_info": "win from races refers to max(points)",
+      "actual": "CONTRADICTED",
+      "predicted": "ENTAILED",
+      "reasoning": "Michael Schumacher won 3 races at the Sepang International Circuit (2000, 2001, 2004), where a win is defined as having max(points) in a race. Since 3 never exceeded 5, the claim is supported by the data.",
+      "error_type": "MISSED_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema circuits\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema drivers\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema results\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema races\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT * FROM circuits WHERE name LIKE '%Sepang%'\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT * FROM drivers WHERE surname = 'Schumacher' AND forename = 'Michael'\"",
+        "sqlite3 -header -column \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"\nSELECT r.raceId, ra.year, ra.name, r.points, r.position, r.positionText\nFROM results r\nJOIN races ra ON r.raceId = ra.raceId\nWHERE ra.circuitId = 2 AND r.driverId = 30\nORDER BY ra.year;\n\"",
+        "sqlite3 -header -column \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"\nSELECT ra.raceId, ra.year, ra.name, r.points AS schumacher_points, \n       (SELECT MAX(r2.points) FROM results r2 WHERE r2.raceId = ra.raceId) AS max_points_in_race\nFROM results r\nJOIN races ra ON r.raceId = ra.raceId\nWHERE ra.circuitId = 2 AND r.driverId = 30\nORDER BY ra.year;\n\""
+      ]
+    },
+    {
+      "claim_id": 2018,
+      "db_name": "card_games",
+      "category": "",
+      "claim": "The artist Aaron Boyd has illustrated 12 different types of cards.",
+      "extra_info": "Aaron Boyd' is artist;",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states Aaron Boyd illustrated 12 different types of cards, but querying the database shows he illustrated only 2 distinct types: 'Creature' and 'Instant'.",
+      "error_type": "WRONG_VALUE",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \".schema cards\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT DISTINCT types FROM cards WHERE artist = 'Aaron Boyd';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/card_games.sqlite\" \"SELECT COUNT(DISTINCT types) FROM cards WHERE artist = 'Aaron Boyd';\""
+      ]
+    },
+    {
+      "claim_id": 7721,
+      "db_name": "debit_card_specializing",
+      "category": "",
+      "claim": "Customer 38508 spent a total of 68740.2 at gas stations.",
+      "extra_info": "January 2012 refers to the Date value = '201201'",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "Customer 38508 has 8 transactions in the transactions_1k table with a total Price (spending) of 3437.01, not 68740.2 as claimed. The claimed value of 68740.2 happens to be exactly 20 times the actual total, but does not correspond to any valid metric in the database (SUM(Amount) = 148, SUM(Price*Amount) = 88612.38).",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT SUM(Price) FROM transactions_1k WHERE CustomerID = 38508;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT COUNT(*), SUM(Price), SUM(Amount) FROM transactions_1k WHERE CustomerID = 38508;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT SUM(Consumption) FROM yearmonth WHERE CustomerID = 38508;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT * FROM yearmonth WHERE CustomerID = 38508 LIMIT 20;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT SUM(Amount) FROM transactions_1k WHERE CustomerID = 38508;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT Price * Amount as total FROM transactions_1k WHERE CustomerID = 38508;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT SUM(Price * Amount) FROM transactions_1k WHERE CustomerID = 38508;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT t.TransactionID, t.Date, t.GasStationID, t.Amount, t.Price, t.Price * t.Amount as TotalSpend FROM transactions_1k t WHERE t.CustomerID = 38508;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/debit_card_specializing.sqlite\" \"SELECT SUM(Price) * 20 FROM transactions_1k WHERE CustomerID = 38508;\""
+      ]
+    },
+    {
+      "claim_id": 3617,
+      "db_name": "codebase_community",
+      "category": "",
+      "claim": "There is exactly one post tagged 'careers' in the Codebase Community.",
+      "extra_info": "tag specified as 'careers' refers to TagName = 'careers';",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The claim states there is exactly one post tagged 'careers', but the database shows 22 posts tagged with 'careers' (confirmed both by the tags.Count column and by counting posts with '<careers>' in their Tags field).",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \".schema tags\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \"SELECT * FROM tags WHERE TagName = 'careers';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \".schema posts\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/codebase_community.sqlite\" \"SELECT COUNT(*) FROM posts WHERE Tags LIKE '%<careers>%';\""
+      ]
+    },
+    {
+      "claim_id": 4950,
+      "db_name": "formula_1",
+      "category": "",
+      "claim": "Only one Japanese constructor has recorded zero points across exactly two races.",
+      "extra_info": "2 races refers to COUNT(raceID) = 2; Japanese refers to constructors.nationality = 'Japanese';",
+      "actual": "CONTRADICTED",
+      "predicted": "ENTAILED",
+      "reasoning": "The query shows that among all Japanese constructors, only Kojima has exactly 2 races (COUNT(raceId) = 2) with zero total points (SUM(points) = 0). No other Japanese constructor meets both conditions simultaneously, confirming the claim that 'only one' Japanese constructor fits this description.",
+      "error_type": "MISSED_CONTRADICTION",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema constructors\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \".schema constructorResults\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"SELECT * FROM constructors WHERE nationality = 'Japanese';\"",
+        "sqlite3 -header -column \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"\nSELECT c.constructorId, c.name, c.nationality, COUNT(cr.raceId) as race_count, SUM(cr.points) as total_points\nFROM constructors c\nJOIN constructorResults cr ON c.constructorId = cr.constructorId\nWHERE c.nationality = 'Japanese'\nGROUP BY c.constructorId, c.name\nHAVING COUNT(cr.raceId) = 2 AND SUM(cr.points) = 0;\n\"",
+        "sqlite3 -header -column \"/Users/david/workspace/claimdb/test_dbs/formula_1.sqlite\" \"\nSELECT c.constructorId, c.name, COUNT(cr.raceId) as race_count, SUM(cr.points) as total_points\nFROM constructors c\nJOIN constructorResults cr ON c.constructorId = cr.constructorId\nWHERE c.nationality = 'Japanese'\nGROUP BY c.constructorId, c.name;\n\""
+      ]
+    },
+    {
+      "claim_id": 726,
+      "db_name": "financial",
+      "category": "",
+      "claim": "For the branch located in South Bohemia with the largest number of inhabitants, male clients make up 44.26229508196721% of all clients.",
+      "extra_info": "Percentage of the male clients = DIVIDE(COUNT(male clients), COUNT(clients)) * 100; Male refers to gender = 'M', A3 is the region name. A4 contains the information about inhabitants.",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "The branch in South Bohemia with the largest number of inhabitants is Ceske Budejovice (district_id 14, 177,686 inhabitants), where male clients make up 40.0% (18/45), not 44.26%. The claimed percentage of 44.26229508196721% actually corresponds to Jindrichuv Hradec (district_id 16, 93,931 inhabitants), which is the third-largest district in South Bohemia, not the largest.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema district\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema client\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema account\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \".schema disp\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT district_id, A2, A3, A4 FROM district WHERE A3 = 'south Bohemia' ORDER BY A4 DESC LIMIT 5;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT DISTINCT A3 FROM district WHERE A3 LIKE '%Bohemia%';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"SELECT district_id, A2, A3, CAST(A4 AS INTEGER) as inhabitants FROM district WHERE A3 = 'south Bohemia' ORDER BY CAST(A4 AS INTEGER) DESC;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"\nSELECT \n    COUNT(*) as total_clients,\n    SUM(CASE WHEN gender = 'M' THEN 1 ELSE 0 END) as male_clients,\n    CAST(SUM(CASE WHEN gender = 'M' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100 as male_percentage\nFROM client \nWHERE district_id = 14;\n\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/financial.sqlite\" \"\nSELECT \n    d.district_id, d.A2, d.A4,\n    COUNT(*) as total_clients,\n    SUM(CASE WHEN c.gender = 'M' THEN 1 ELSE 0 END) as male_clients,\n    CAST(SUM(CASE WHEN c.gender = 'M' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) * 100 as male_percentage\nFROM client c\nJOIN district d ON c.district_id = d.district_id\nWHERE d.A3 = 'south Bohemia'\nGROUP BY d.district_id\nORDER BY CAST(d.A4 AS INTEGER) DESC;\n\""
+      ]
+    },
+    {
+      "claim_id": 1591,
+      "db_name": "toxicology",
+      "category": "",
+      "claim": "TR430 is the carcinogenic molecule with the maximum double-bond count in the dataset.",
+      "extra_info": "label = '+' mean molecules are carcinogenic; double bond refers to bond_type = ' = ';",
+      "actual": "ENTAILED",
+      "predicted": "CONTRADICTED",
+      "reasoning": "TR430 is carcinogenic (label='+') and has 26 double bonds (bond_type='='), which is indeed the maximum among carcinogenic molecules. However, the claim states TR430 is 'the' carcinogenic molecule with the maximum double-bond count, implying uniqueness. TR397 is also carcinogenic and also has 26 double bonds, so TR430 is not the sole molecule with the maximum double-bond count.",
+      "error_type": "WRONG_COUNT",
+      "sql_queries": [
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT molecule_id, label FROM molecule WHERE molecule_id = 'TR430';\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT m.molecule_id, COUNT(b.bond_id) as double_bond_count FROM molecule m JOIN bond b ON m.molecule_id = b.molecule_id WHERE m.label = '+' AND b.bond_type = ' = ' GROUP BY m.molecule_id ORDER BY double_bond_count DESC LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT DISTINCT bond_type, hex(bond_type), length(bond_type) FROM bond;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT m.molecule_id, COUNT(b.bond_id) as double_bond_count FROM molecule m JOIN bond b ON m.molecule_id = b.molecule_id WHERE m.label = '+' AND b.bond_type = '=' GROUP BY m.molecule_id ORDER BY double_bond_count DESC LIMIT 10;\"",
+        "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT m.molecule_id, COUNT(b.bond_id) as double_bond_count FROM molecule m JOIN bond b ON m.molecule_id = b.molecule_id WHERE m.label = '+' AND b.bond_type = '=' GROUP BY m.molecule_id HAVING double_bond_count = (SELECT MAX(cnt) FROM (SELECT COUNT(b2.bond_id) as cnt FROM molecule m2 JOIN bond b2 ON m2.molecule_id = b2.molecule_id WHERE m2.label = '+' AND b2.bond_type = '=' GROUP BY m2.molecule_id));\""
+      ]
+    }
+  ]
+}

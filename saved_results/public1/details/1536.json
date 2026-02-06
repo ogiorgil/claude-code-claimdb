@@ -1,0 +1,611 @@
+{
+  "claim_id": 1536,
+  "db_name": "toxicology",
+  "claim": "Atom 19 is connected through exactly 312 bonds in the dataset.",
+  "extra_info": "connections refers to bond_id; atom 19 refers to atom_id like 'TR%_19';",
+  "predicted_label": "CONTRADICTED",
+  "reasoning": "The claim states atom 19 (atom_id LIKE 'TR%_19') is connected through exactly 312 bonds. Querying the connected table for all bond_ids associated with atom 19 (in either atom_id or atom_id2 columns) yields 498 distinct bonds, not 312. The data directly contradicts the claimed count.",
+  "messages": [
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01DPZXY3gmy78Jmgzm6D8Var",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "\n\nI'll start by exploring the database schema to understand the structure."
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 3,
+          "cache_creation_input_tokens": 540,
+          "cache_read_input_tokens": 16167,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 540
+          },
+          "output_tokens": 4,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "cf7b5937-c3ff-4fee-92cd-e3043db9ab68"
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01DPZXY3gmy78Jmgzm6D8Var",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01TrjFjXqETsopXeLGtdVuDC",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+              "description": "List all tables in the database"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 3,
+          "cache_creation_input_tokens": 540,
+          "cache_read_input_tokens": 16167,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 540
+          },
+          "output_tokens": 4,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "aeab6140-8ae6-49ec-bb36-8e7df4dbe902"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01TrjFjXqETsopXeLGtdVuDC",
+            "type": "tool_result",
+            "content": "atom       bond       connected  molecule",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "a344d27e-1619-4232-bf85-cd892544506f",
+      "tool_use_result": {
+        "stdout": "atom       bond       connected  molecule",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01DPZXY3gmy78Jmgzm6D8Var",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01Q6PqtGxPPcJGFJNoDebwNz",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+              "description": "Get full schema"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 3,
+          "cache_creation_input_tokens": 540,
+          "cache_read_input_tokens": 16167,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 540
+          },
+          "output_tokens": 4,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "8fce6182-a9fb-4dbf-a9c2-00d94c839122"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01Q6PqtGxPPcJGFJNoDebwNz",
+            "type": "tool_result",
+            "content": "CREATE TABLE `atom` (\n  `atom_id` TEXT NOT NULL,\n  `molecule_id` TEXT DEFAULT NULL,\n  `element` TEXT DEFAULT NULL,\n  PRIMARY KEY (`atom_id`),\n  FOREIGN KEY (`molecule_id`) REFERENCES `molecule` (`molecule_id`)\n);\nCREATE TABLE `bond` (\n  `bond_id` TEXT NOT NULL,\n  `molecule_id` TEXT DEFAULT NULL,\n  `bond_type` TEXT DEFAULT NULL,\n  PRIMARY KEY (`bond_id`),\n  FOREIGN KEY (`molecule_id`) REFERENCES `molecule` (`molecule_id`)\n);\nCREATE TABLE `connected` (\n  `atom_id` TEXT NOT NULL,\n  `atom_id2` TEXT NOT NULL,\n  `bond_id` TEXT DEFAULT NULL,\n  PRIMARY KEY (`atom_id`,`atom_id2`),\n  FOREIGN KEY (`atom_id`) REFERENCES `atom` (`atom_id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  FOREIGN KEY (`atom_id2`) REFERENCES `atom` (`atom_id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  FOREIGN KEY (`bond_id`) REFERENCES `bond` (`bond_id`) ON DELETE CASCADE ON UPDATE CASCADE\n);\nCREATE TABLE `molecule` (\n  `molecule_id` TEXT NOT NULL,\n  `label` TEXT DEFAULT NULL,\n  PRIMARY KEY (`molecule_id`)\n);",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "397b1391-4781-4271-b265-d7bd4086fa08",
+      "tool_use_result": {
+        "stdout": "CREATE TABLE `atom` (\n  `atom_id` TEXT NOT NULL,\n  `molecule_id` TEXT DEFAULT NULL,\n  `element` TEXT DEFAULT NULL,\n  PRIMARY KEY (`atom_id`),\n  FOREIGN KEY (`molecule_id`) REFERENCES `molecule` (`molecule_id`)\n);\nCREATE TABLE `bond` (\n  `bond_id` TEXT NOT NULL,\n  `molecule_id` TEXT DEFAULT NULL,\n  `bond_type` TEXT DEFAULT NULL,\n  PRIMARY KEY (`bond_id`),\n  FOREIGN KEY (`molecule_id`) REFERENCES `molecule` (`molecule_id`)\n);\nCREATE TABLE `connected` (\n  `atom_id` TEXT NOT NULL,\n  `atom_id2` TEXT NOT NULL,\n  `bond_id` TEXT DEFAULT NULL,\n  PRIMARY KEY (`atom_id`,`atom_id2`),\n  FOREIGN KEY (`atom_id`) REFERENCES `atom` (`atom_id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  FOREIGN KEY (`atom_id2`) REFERENCES `atom` (`atom_id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  FOREIGN KEY (`bond_id`) REFERENCES `bond` (`bond_id`) ON DELETE CASCADE ON UPDATE CASCADE\n);\nCREATE TABLE `molecule` (\n  `molecule_id` TEXT NOT NULL,\n  `label` TEXT DEFAULT NULL,\n  PRIMARY KEY (`molecule_id`)\n);",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_017E38ncebwBpAsV87PASrFL",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Now I understand the schema. The claim says \"Atom 19\" is connected through exactly 312 bonds. Per the hints, atom 19 refers to `atom_id LIKE 'TR%_19'` and connections refers to `bond_id`. Let me query for the count of bonds associated with atom 19."
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 587,
+          "cache_read_input_tokens": 16707,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 587
+          },
+          "output_tokens": 2,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "751e3a7a-9a4a-4e42-aefa-4ef490a05609"
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_017E38ncebwBpAsV87PASrFL",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01H1wMw6MpVA57258Wn3582q",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(bond_id) FROM connected WHERE atom_id LIKE 'TR%_19' OR atom_id2 LIKE 'TR%_19';\"",
+              "description": "Count bonds connected to atom 19"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 587,
+          "cache_read_input_tokens": 16707,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 587
+          },
+          "output_tokens": 2,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "674dfacb-eeab-476b-9b9d-8c3d6100d7ab"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01H1wMw6MpVA57258Wn3582q",
+            "type": "tool_result",
+            "content": "996",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "9dd9dfac-b465-472b-9594-1a649b493a8e",
+      "tool_use_result": {
+        "stdout": "996",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_017E38ncebwBpAsV87PASrFL",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01VpLwbYtLv6uEKuKXPsfJrx",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(DISTINCT bond_id) FROM connected WHERE atom_id LIKE 'TR%_19' OR atom_id2 LIKE 'TR%_19';\"",
+              "description": "Count distinct bonds connected to atom 19"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 587,
+          "cache_read_input_tokens": 16707,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 587
+          },
+          "output_tokens": 2,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "595ec3cb-8bfc-40e0-a18b-a6977092601a"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01VpLwbYtLv6uEKuKXPsfJrx",
+            "type": "tool_result",
+            "content": "498",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "c07cf642-37e9-4c31-8855-ea16695a8dab",
+      "tool_use_result": {
+        "stdout": "498",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_018cLZ5S2r3Z1ETeVTT5sz3K",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "The total count is 996 (which double-counts since each bond appears in both atom_id and atom_id2 columns), and distinct bond count is 498. But let me think about this more carefully. The `connected` table has `atom_id` and `atom_id2` as separate columns. A bond involving atom 19 could appear with atom 19 in either column. Let me check using just `atom_id` as the hint suggests \"connections refers to bond_id\":"
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 397,
+          "cache_read_input_tokens": 17294,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 397
+          },
+          "output_tokens": 1,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "4306d9bd-dd43-4df7-97bc-e8b7e1c2eefd"
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_018cLZ5S2r3Z1ETeVTT5sz3K",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_014CzYpbuWzxPcbuFobsKvJ2",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(bond_id) FROM connected WHERE atom_id LIKE 'TR%_19';\"",
+              "description": "Count bonds where atom_id matches atom 19"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 397,
+          "cache_read_input_tokens": 17294,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 397
+          },
+          "output_tokens": 1,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "11437125-ffb6-4c59-b57d-0b81886bf8e8"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_014CzYpbuWzxPcbuFobsKvJ2",
+            "type": "tool_result",
+            "content": "498",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "ff58a2d5-d4e8-48c6-a5d6-292d9138bead",
+      "tool_use_result": {
+        "stdout": "498",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_018cLZ5S2r3Z1ETeVTT5sz3K",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01KyFJiPvaNH1eNHZNipBPyt",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT COUNT(bond_id) FROM connected WHERE atom_id2 LIKE 'TR%_19';\"",
+              "description": "Count bonds where atom_id2 matches atom 19"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 397,
+          "cache_read_input_tokens": 17294,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 397
+          },
+          "output_tokens": 1,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "76b5dfc9-9b01-4df7-b323-dc3ddf5bcb40"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01KyFJiPvaNH1eNHZNipBPyt",
+            "type": "tool_result",
+            "content": "498",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "a395f1b7-2200-4436-a03e-63c561c60923",
+      "tool_use_result": {
+        "stdout": "498",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01PxjnhjNdvins2yi7sn9gTs",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Each row in `connected` appears twice (once for each direction), so there are 498 distinct bonds. The claim states exactly 312 bonds. Let me also verify with a sample to make sure the LIKE pattern is correct:"
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 411,
+          "cache_read_input_tokens": 17691,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 411
+          },
+          "output_tokens": 1,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "6773984d-5106-4c40-8135-cc8b21531c63"
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01PxjnhjNdvins2yi7sn9gTs",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01XY3c4bgzEcCMMBHYz311tE",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT atom_id FROM connected WHERE atom_id LIKE 'TR%_19' LIMIT 10;\"",
+              "description": "Sample atom_id values matching the pattern"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 411,
+          "cache_read_input_tokens": 17691,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 411
+          },
+          "output_tokens": 1,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "2749cd41-1d67-464c-888a-e16def798e8b"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01XY3c4bgzEcCMMBHYz311tE",
+            "type": "tool_result",
+            "content": "TR001_19\nTR004_19\nTR005_19\nTR006_19\nTR007_19\nTR008_19\nTR009_19\nTR011_19\nTR012_19\nTR012_19",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "b8111e8e-79cc-42be-ae45-ae5d9f435b8c",
+      "tool_use_result": {
+        "stdout": "TR001_19\nTR004_19\nTR005_19\nTR006_19\nTR007_19\nTR008_19\nTR009_19\nTR011_19\nTR012_19\nTR012_19",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01XHU4SLW7CGyZFHop5iFZ4A",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "The pattern correctly matches atom IDs like `TR001_19`, `TR004_19`, etc. The count of distinct bonds involving atom 19 is 498, not 312 as claimed.\n\nThe claim states atom 19 is connected through exactly 312 bonds, but the database shows 498 bonds. This is a contradiction.\n\n```json\n{\"label\": \"CONTRADICTED\", \"reasoning\": \"The claim states atom 19 (atom_id LIKE 'TR%_19') is connected through exactly 312 bonds. Querying the connected table for all bond_ids associated with atom 19 (in either atom_id or atom_id2 columns) yields 498 distinct bonds, not 312. The data directly contradicts the claimed count.\"}\n```"
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 339,
+          "cache_read_input_tokens": 18102,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 339
+          },
+          "output_tokens": 1,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "8eaeece4-977a-4a83-98a1-2e57eea8504d",
+      "uuid": "a9b7b2a3-12fa-47f9-8b17-5abbedcc0491"
+    }
+  ],
+  "usage": {
+    "input_tokens": 7,
+    "output_tokens": 1230,
+    "cache_read_tokens": 85961,
+    "cache_creation_tokens": 2274,
+    "cost_usd": 0.09279499999999999
+  },
+  "duration_seconds": 22.39,
+  "success": true
+}

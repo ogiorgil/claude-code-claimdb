@@ -1,0 +1,301 @@
+{
+  "claim_id": 1960,
+  "db_name": "toxicology",
+  "claim": "No molecules between TR004 and TR010 contain single bonds.",
+  "extra_info": "single bond refers to bond_type = '-'; molecules between TR004 to TR010 refers molecule_id BETWEEN 'TR004' and 'TR010';",
+  "predicted_label": "CONTRADICTED",
+  "reasoning": "The claim states no molecules between TR004 and TR010 contain single bonds (bond_type = '-'). However, querying the bond table shows numerous single bonds across all molecules in this range (TR004, TR005, TR006, TR007, TR008, TR009, and TR010), directly contradicting the claim.",
+  "messages": [
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01FMjj5aG8kxg4B5bBmKH47k",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "\n\nI'll start by exploring the database schema and then verify the claim."
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 3,
+          "cache_creation_input_tokens": 549,
+          "cache_read_input_tokens": 16167,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 549
+          },
+          "output_tokens": 4,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "49df5510-5809-4ae7-907f-76ce12ffe4b5",
+      "uuid": "03efcce7-88e2-486a-a75e-058ac2ba1fc9"
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01FMjj5aG8kxg4B5bBmKH47k",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01Gq9S2hwyVWKRSHXTvkDK8s",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".tables\"",
+              "description": "List all tables in the database"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 3,
+          "cache_creation_input_tokens": 549,
+          "cache_read_input_tokens": 16167,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 549
+          },
+          "output_tokens": 4,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "49df5510-5809-4ae7-907f-76ce12ffe4b5",
+      "uuid": "a09dbf70-841c-45d6-beba-fb680d461706"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01Gq9S2hwyVWKRSHXTvkDK8s",
+            "type": "tool_result",
+            "content": "atom       bond       connected  molecule",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "49df5510-5809-4ae7-907f-76ce12ffe4b5",
+      "uuid": "708a4fb5-e766-40f6-b0f4-0d4f17be633b",
+      "tool_use_result": {
+        "stdout": "atom       bond       connected  molecule",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01FMjj5aG8kxg4B5bBmKH47k",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01EwQ8fPXTmyqko1YpaXuFwb",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \".schema\"",
+              "description": "Get full database schema"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 3,
+          "cache_creation_input_tokens": 549,
+          "cache_read_input_tokens": 16167,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 549
+          },
+          "output_tokens": 4,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "49df5510-5809-4ae7-907f-76ce12ffe4b5",
+      "uuid": "59d31fb7-02b5-4625-99b6-1a7677db9e96"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01EwQ8fPXTmyqko1YpaXuFwb",
+            "type": "tool_result",
+            "content": "CREATE TABLE `atom` (\n  `atom_id` TEXT NOT NULL,\n  `molecule_id` TEXT DEFAULT NULL,\n  `element` TEXT DEFAULT NULL,\n  PRIMARY KEY (`atom_id`),\n  FOREIGN KEY (`molecule_id`) REFERENCES `molecule` (`molecule_id`)\n);\nCREATE TABLE `bond` (\n  `bond_id` TEXT NOT NULL,\n  `molecule_id` TEXT DEFAULT NULL,\n  `bond_type` TEXT DEFAULT NULL,\n  PRIMARY KEY (`bond_id`),\n  FOREIGN KEY (`molecule_id`) REFERENCES `molecule` (`molecule_id`)\n);\nCREATE TABLE `connected` (\n  `atom_id` TEXT NOT NULL,\n  `atom_id2` TEXT NOT NULL,\n  `bond_id` TEXT DEFAULT NULL,\n  PRIMARY KEY (`atom_id`,`atom_id2`),\n  FOREIGN KEY (`atom_id`) REFERENCES `atom` (`atom_id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  FOREIGN KEY (`atom_id2`) REFERENCES `atom` (`atom_id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  FOREIGN KEY (`bond_id`) REFERENCES `bond` (`bond_id`) ON DELETE CASCADE ON UPDATE CASCADE\n);\nCREATE TABLE `molecule` (\n  `molecule_id` TEXT NOT NULL,\n  `label` TEXT DEFAULT NULL,\n  PRIMARY KEY (`molecule_id`)\n);",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "49df5510-5809-4ae7-907f-76ce12ffe4b5",
+      "uuid": "0f72bfd4-d235-4a17-8730-01ba2545826c",
+      "tool_use_result": {
+        "stdout": "CREATE TABLE `atom` (\n  `atom_id` TEXT NOT NULL,\n  `molecule_id` TEXT DEFAULT NULL,\n  `element` TEXT DEFAULT NULL,\n  PRIMARY KEY (`atom_id`),\n  FOREIGN KEY (`molecule_id`) REFERENCES `molecule` (`molecule_id`)\n);\nCREATE TABLE `bond` (\n  `bond_id` TEXT NOT NULL,\n  `molecule_id` TEXT DEFAULT NULL,\n  `bond_type` TEXT DEFAULT NULL,\n  PRIMARY KEY (`bond_id`),\n  FOREIGN KEY (`molecule_id`) REFERENCES `molecule` (`molecule_id`)\n);\nCREATE TABLE `connected` (\n  `atom_id` TEXT NOT NULL,\n  `atom_id2` TEXT NOT NULL,\n  `bond_id` TEXT DEFAULT NULL,\n  PRIMARY KEY (`atom_id`,`atom_id2`),\n  FOREIGN KEY (`atom_id`) REFERENCES `atom` (`atom_id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  FOREIGN KEY (`atom_id2`) REFERENCES `atom` (`atom_id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  FOREIGN KEY (`bond_id`) REFERENCES `bond` (`bond_id`) ON DELETE CASCADE ON UPDATE CASCADE\n);\nCREATE TABLE `molecule` (\n  `molecule_id` TEXT NOT NULL,\n  `label` TEXT DEFAULT NULL,\n  PRIMARY KEY (`molecule_id`)\n);",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01BP1KoMgA78FwVqVcDumjZ3",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Good, the schema has the relevant tables. Now let me query for single bonds (`bond_type = '-'`) in molecules between TR004 and TR010."
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 589,
+          "cache_read_input_tokens": 16716,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 589
+          },
+          "output_tokens": 1,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "49df5510-5809-4ae7-907f-76ce12ffe4b5",
+      "uuid": "1eb94d3d-56d8-4ff2-b3ba-4bc58162ade6"
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01BP1KoMgA78FwVqVcDumjZ3",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01Wczu4eeWAx9F6zCJHtdgc4",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claimdb/test_dbs/toxicology.sqlite\" \"SELECT molecule_id, bond_id, bond_type FROM bond WHERE molecule_id BETWEEN 'TR004' AND 'TR010' AND bond_type = '-';\"",
+              "description": "Check for single bonds in molecules TR004-TR010"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 589,
+          "cache_read_input_tokens": 16716,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 589
+          },
+          "output_tokens": 1,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "49df5510-5809-4ae7-907f-76ce12ffe4b5",
+      "uuid": "cbaa9073-c2da-48e2-b870-2c47b8097717"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01Wczu4eeWAx9F6zCJHtdgc4",
+            "type": "tool_result",
+            "content": "TR004|TR004_10_12|-\nTR004|TR004_10_21|-\nTR004|TR004_12_22|-\nTR004|TR004_12_23|-\nTR004|TR004_12_24|-\nTR004|TR004_1_2|-\nTR004|TR004_2_3|-\nTR004|TR004_2_4|-\nTR004|TR004_2_5|-\nTR004|TR004_3_8|-\nTR004|TR004_4_7|-\nTR004|TR004_5_6|-\nTR004|TR004_6_13|-\nTR004|TR004_6_14|-\nTR004|TR004_6_15|-\nTR004|TR004_7_16|-\nTR004|TR004_7_17|-\nTR004|TR004_7_18|-\nTR004|TR004_8_19|-\nTR004|TR004_8_20|-\nTR004|TR004_8_9|-\nTR004|TR004_9_10|-\nTR005|TR005_10_20|-\nTR005|TR005_11_21|-\nTR005|TR005_12_13|-\nTR005|TR005_12_15|-\nTR005|TR005_13_22|-\nTR005|TR005_14_23|-\nTR005|TR005_15_24|-\nTR005|TR005_15_25|-\nTR005|TR005_16_26|-\nTR005|TR005_16_27|-\nTR005|TR005_1_17|-\nTR005|TR005_1_6|-\nTR005|TR005_28_29|-\nTR005|TR005_2_16|-\nTR005|TR005_2_3|-\nTR005|TR005_3_18|-\nTR005|TR005_4_5|-\nTR005|TR005_4_7|-\nTR005|TR005_5_10|-\nTR005|TR005_6_19|-\nTR005|TR005_8_11|-\nTR005|TR005_8_9|-\nTR005|TR005_9_14|-\nTR006|TR006_11_12|-\nTR006|TR006_12_22|-\nTR006|TR006_1_2|-\nTR006|TR006_1_3|-\nTR006|TR006_1_4|-\nTR006|TR006_23_24|-\nTR006|TR006_23_25|-\nTR006|TR006_23_26|-\nTR006|TR006_24_30|-\nTR006|TR006_24_36|-\nTR006|TR006_24_37|-\nTR006|TR006_25_33|-\nTR006|TR006_25_38|-\nTR006|TR006_25_39|-\nTR006|TR006_26_27|-\nTR006|TR006_26_40|-\nTR006|TR006_26_41|-\nTR006|TR006_27_28|-\nTR006|TR006_2_14|-\nTR006|TR006_2_15|-\nTR006|TR006_2_8|-\nTR006|TR006_30_31|-\nTR006|TR006_33_34|-\nTR006|TR006_3_11|-\nTR006|TR006_3_16|-\nTR006|TR006_3_17|-\nTR006|TR006_45_46|-\nTR006|TR006_45_47|-\nTR006|TR006_4_18|-\nTR006|TR006_4_19|-\nTR006|TR006_4_5|-\nTR006|TR006_5_6|-\nTR006|TR006_6_20|-\nTR006|TR006_8_9|-\nTR006|TR006_9_21|-\nTR007|TR007_10_11|-\nTR007|TR007_11_13|-\nTR007|TR007_11_26|-\nTR007|TR007_12_27|-\nTR007|TR007_13_14|-\nTR007|TR007_14_28|-\nTR007|TR007_14_29|-\nTR007|TR007_15_30|-\nTR007|TR007_1_16|-\nTR007|TR007_1_6|-\nTR007|TR007_2_17|-\nTR007|TR007_2_3|-\nTR007|TR007_3_18|-\nTR007|TR007_4_19|-\nTR007|TR007_4_5|-\nTR007|TR007_5_7|-\nTR007|TR007_6_20|-\nTR007|TR007_7_21|-\nTR007|TR007_7_22|-\nTR007|TR007_7_8|-\nTR007|TR007_8_23|-\nTR007|TR007_8_24|-\nTR007|TR007_8_9|-\nTR007|TR007_9_10|-\nTR007|TR007_9_25|-\nTR008|TR008_14_16|-\nTR008|TR008_14_17|-\nTR008|TR008_1_12|-\nTR008|TR008_1_4|-\nTR008|TR008_2_13|-\nTR008|TR008_2_3|-\nTR008|TR008_3_14|-\nTR008|TR008_3_15|-\nTR008|TR008_3_6|-\nTR008|TR008_4_14|-\nTR008|TR008_4_18|-\nTR008|TR008_4_5|-\nTR008|TR008_5_19|-\nTR008|TR008_5_6|-\nTR008|TR008_5_9|-\nTR008|TR008_6_20|-\nTR008|TR008_6_7|-\nTR008|TR008_7_21|-\nTR008|TR008_7_22|-\nTR008|TR008_7_8|-\nTR008|TR008_8_11|-\nTR008|TR008_8_23|-\nTR008|TR008_8_9|-\nTR008|TR008_9_10|-\nTR008|TR008_9_24|-\nTR009|TR009_10_12|-\nTR009|TR009_10_16|-\nTR009|TR009_12_17|-\nTR009|TR009_13_21|-\nTR009|TR009_15_22|-\nTR009|TR009_1_2|-\nTR009|TR009_2_3|-\nTR009|TR009_2_4|-\nTR009|TR009_2_5|-\nTR009|TR009_3_18|-\nTR009|TR009_3_6|-\nTR009|TR009_3_7|-\nTR009|TR009_4_10|-\nTR009|TR009_4_8|-\nTR009|TR009_4_9|-\nTR009|TR009_5_11|-\nTR009|TR009_6_10|-\nTR009|TR009_6_13|-\nTR009|TR009_6_19|-\nTR009|TR009_7_14|-\nTR009|TR009_7_15|-\nTR009|TR009_7_20|-\nTR010|TR010_11_16|-\nTR010|TR010_11_17|-\nTR010|TR010_11_18|-\nTR010|TR010_1_2|-\nTR010|TR010_1_3|-\nTR010|TR010_1_4|-\nTR010|TR010_1_5|-\nTR010|TR010_2_6|-\nTR010|TR010_3_7|-\nTR010|TR010_4_11|-\nTR010|TR010_6_12|-\nTR010|TR010_7_13|-\nTR010|TR010_7_14|-\nTR010|TR010_7_15|-\nTR010|TR010_8_10|-\nTR010|TR010_8_9|-",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "49df5510-5809-4ae7-907f-76ce12ffe4b5",
+      "uuid": "6594c157-339f-4068-b068-ba11efc594ce",
+      "tool_use_result": {
+        "stdout": "TR004|TR004_10_12|-\nTR004|TR004_10_21|-\nTR004|TR004_12_22|-\nTR004|TR004_12_23|-\nTR004|TR004_12_24|-\nTR004|TR004_1_2|-\nTR004|TR004_2_3|-\nTR004|TR004_2_4|-\nTR004|TR004_2_5|-\nTR004|TR004_3_8|-\nTR004|TR004_4_7|-\nTR004|TR004_5_6|-\nTR004|TR004_6_13|-\nTR004|TR004_6_14|-\nTR004|TR004_6_15|-\nTR004|TR004_7_16|-\nTR004|TR004_7_17|-\nTR004|TR004_7_18|-\nTR004|TR004_8_19|-\nTR004|TR004_8_20|-\nTR004|TR004_8_9|-\nTR004|TR004_9_10|-\nTR005|TR005_10_20|-\nTR005|TR005_11_21|-\nTR005|TR005_12_13|-\nTR005|TR005_12_15|-\nTR005|TR005_13_22|-\nTR005|TR005_14_23|-\nTR005|TR005_15_24|-\nTR005|TR005_15_25|-\nTR005|TR005_16_26|-\nTR005|TR005_16_27|-\nTR005|TR005_1_17|-\nTR005|TR005_1_6|-\nTR005|TR005_28_29|-\nTR005|TR005_2_16|-\nTR005|TR005_2_3|-\nTR005|TR005_3_18|-\nTR005|TR005_4_5|-\nTR005|TR005_4_7|-\nTR005|TR005_5_10|-\nTR005|TR005_6_19|-\nTR005|TR005_8_11|-\nTR005|TR005_8_9|-\nTR005|TR005_9_14|-\nTR006|TR006_11_12|-\nTR006|TR006_12_22|-\nTR006|TR006_1_2|-\nTR006|TR006_1_3|-\nTR006|TR006_1_4|-\nTR006|TR006_23_24|-\nTR006|TR006_23_25|-\nTR006|TR006_23_26|-\nTR006|TR006_24_30|-\nTR006|TR006_24_36|-\nTR006|TR006_24_37|-\nTR006|TR006_25_33|-\nTR006|TR006_25_38|-\nTR006|TR006_25_39|-\nTR006|TR006_26_27|-\nTR006|TR006_26_40|-\nTR006|TR006_26_41|-\nTR006|TR006_27_28|-\nTR006|TR006_2_14|-\nTR006|TR006_2_15|-\nTR006|TR006_2_8|-\nTR006|TR006_30_31|-\nTR006|TR006_33_34|-\nTR006|TR006_3_11|-\nTR006|TR006_3_16|-\nTR006|TR006_3_17|-\nTR006|TR006_45_46|-\nTR006|TR006_45_47|-\nTR006|TR006_4_18|-\nTR006|TR006_4_19|-\nTR006|TR006_4_5|-\nTR006|TR006_5_6|-\nTR006|TR006_6_20|-\nTR006|TR006_8_9|-\nTR006|TR006_9_21|-\nTR007|TR007_10_11|-\nTR007|TR007_11_13|-\nTR007|TR007_11_26|-\nTR007|TR007_12_27|-\nTR007|TR007_13_14|-\nTR007|TR007_14_28|-\nTR007|TR007_14_29|-\nTR007|TR007_15_30|-\nTR007|TR007_1_16|-\nTR007|TR007_1_6|-\nTR007|TR007_2_17|-\nTR007|TR007_2_3|-\nTR007|TR007_3_18|-\nTR007|TR007_4_19|-\nTR007|TR007_4_5|-\nTR007|TR007_5_7|-\nTR007|TR007_6_20|-\nTR007|TR007_7_21|-\nTR007|TR007_7_22|-\nTR007|TR007_7_8|-\nTR007|TR007_8_23|-\nTR007|TR007_8_24|-\nTR007|TR007_8_9|-\nTR007|TR007_9_10|-\nTR007|TR007_9_25|-\nTR008|TR008_14_16|-\nTR008|TR008_14_17|-\nTR008|TR008_1_12|-\nTR008|TR008_1_4|-\nTR008|TR008_2_13|-\nTR008|TR008_2_3|-\nTR008|TR008_3_14|-\nTR008|TR008_3_15|-\nTR008|TR008_3_6|-\nTR008|TR008_4_14|-\nTR008|TR008_4_18|-\nTR008|TR008_4_5|-\nTR008|TR008_5_19|-\nTR008|TR008_5_6|-\nTR008|TR008_5_9|-\nTR008|TR008_6_20|-\nTR008|TR008_6_7|-\nTR008|TR008_7_21|-\nTR008|TR008_7_22|-\nTR008|TR008_7_8|-\nTR008|TR008_8_11|-\nTR008|TR008_8_23|-\nTR008|TR008_8_9|-\nTR008|TR008_9_10|-\nTR008|TR008_9_24|-\nTR009|TR009_10_12|-\nTR009|TR009_10_16|-\nTR009|TR009_12_17|-\nTR009|TR009_13_21|-\nTR009|TR009_15_22|-\nTR009|TR009_1_2|-\nTR009|TR009_2_3|-\nTR009|TR009_2_4|-\nTR009|TR009_2_5|-\nTR009|TR009_3_18|-\nTR009|TR009_3_6|-\nTR009|TR009_3_7|-\nTR009|TR009_4_10|-\nTR009|TR009_4_8|-\nTR009|TR009_4_9|-\nTR009|TR009_5_11|-\nTR009|TR009_6_10|-\nTR009|TR009_6_13|-\nTR009|TR009_6_19|-\nTR009|TR009_7_14|-\nTR009|TR009_7_15|-\nTR009|TR009_7_20|-\nTR010|TR010_11_16|-\nTR010|TR010_11_17|-\nTR010|TR010_11_18|-\nTR010|TR010_1_2|-\nTR010|TR010_1_3|-\nTR010|TR010_1_4|-\nTR010|TR010_1_5|-\nTR010|TR010_2_6|-\nTR010|TR010_3_7|-\nTR010|TR010_4_11|-\nTR010|TR010_6_12|-\nTR010|TR010_7_13|-\nTR010|TR010_7_14|-\nTR010|TR010_7_15|-\nTR010|TR010_8_10|-\nTR010|TR010_8_9|-",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_0133SFoi9wAAFyjtQnjkMJtH",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "The query returns many results. There are numerous single bonds (bond_type = '-') in molecules between TR004 and TR010. The claim states that **no** molecules in this range contain single bonds, but the data clearly shows they do.\n\n```json\n{\"label\": \"CONTRADICTED\", \"reasoning\": \"The claim states no molecules between TR004 and TR010 contain single bonds (bond_type = '-'). However, querying the bond table shows numerous single bonds across all molecules in this range (TR004, TR005, TR006, TR007, TR008, TR009, and TR010), directly contradicting the claim.\"}\n```"
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 2037,
+          "cache_read_input_tokens": 17305,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 2037
+          },
+          "output_tokens": 1,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "49df5510-5809-4ae7-907f-76ce12ffe4b5",
+      "uuid": "756ff932-f44c-43b3-bbe7-518cf32bbddc"
+    }
+  ],
+  "usage": {
+    "input_tokens": 5,
+    "output_tokens": 520,
+    "cache_read_tokens": 50188,
+    "cache_creation_tokens": 3175,
+    "cost_usd": 0.06419075
+  },
+  "duration_seconds": 12.94,
+  "success": true
+}
