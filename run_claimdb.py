@@ -54,9 +54,14 @@ CLASSIFICATION:
      ALWAYS classify counterfactual claims as NOT ENOUGH INFO.
 
   3. SUBJECTIVE: The claim expresses opinions, value judgments, or qualitative
-     assessments that cannot be objectively verified from data. For example,
-     "City X provides the most nurturing learning environment" or
-     "Player Y is the greatest of all time."
+     assessments that cannot be objectively verified from data alone.
+     Watch for words like: "alarmingly", "impressively", "implausibly",
+     "unremarkable", "eye-catching", "convenient", "nurturing",
+     "overrepresentation", "suggests poor quality", "greatest of all time".
+     Even if a hint maps subjective language to a numeric query, the claim
+     is STILL subjective if its core assertion is a value judgment.
+     For example: "1,569 hydrogen atoms is alarmingly high" — the count can
+     be verified, but whether it is "alarming" cannot. Label: NOT ENOUGH INFO.
 
 IMPORTANT NOTES:
 - Be precise with numbers. If a claim says "42" but the data shows "43", that is CONTRADICTED.
@@ -64,6 +69,9 @@ IMPORTANT NOTES:
   is always NOT ENOUGH INFO, because the database records what happened, not what
   would have happened under hypothetical changes.
 - If the claim references columns or concepts not present in the database, classify as NOT ENOUGH INFO.
+- If a claim's core assertion is a subjective judgment (even if it also contains
+  verifiable numbers), classify as NOT ENOUGH INFO. Hints that map subjective
+  language to numeric queries do NOT make a subjective claim verifiable.
 
 OUTPUT FORMAT (must be the LAST thing you write):
 ```json
@@ -180,7 +188,9 @@ def load_completed_ids(output_dir):
         # Remove stale evaluate.json since we're rerunning wrong claims
         if wrong_ids:
             evaluate_file.unlink()
-            print(f"Found {len(correct_ids)} correct, {len(wrong_ids)} wrong — rerunning wrong claims")
+            print(
+                f"Found {len(correct_ids)} correct, {len(wrong_ids)} wrong — rerunning wrong claims"
+            )
         else:
             print(f"All {len(correct_ids)} claims correct, nothing to rerun")
         return correct_ids
@@ -462,13 +472,17 @@ def main():
 
             if result["predicted_label"] == "PARSE_ERROR":
                 errors += 1
-                print(f"  [{completed}/{len(claims)}] Claim {result['claim_id']} "
-                      f"-> PARSE_ERROR: {result['reasoning'][:100]}")
+                print(
+                    f"  [{completed}/{len(claims)}] Claim {result['claim_id']} "
+                    f"-> PARSE_ERROR: {result['reasoning'][:100]}"
+                )
             else:
-                print(f"  [{completed}/{len(claims)}] Claim {result['claim_id']} "
-                      f"(db: {result['db_name']}) "
-                      f"-> {result['predicted_label']} "
-                      f"({result['duration_seconds']:.1f}s, ${cost:.4f})")
+                print(
+                    f"  [{completed}/{len(claims)}] Claim {result['claim_id']} "
+                    f"(db: {result['db_name']}) "
+                    f"-> {result['predicted_label']} "
+                    f"({result['duration_seconds']:.1f}s, ${cost:.4f})"
+                )
 
     try:
         if args.workers <= 1:
