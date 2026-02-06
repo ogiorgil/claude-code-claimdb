@@ -75,3 +75,11 @@ Each run writes to `results/<run_name>/`:
 - `evaluate.json`: scoring summary (created by `evaluate.py`)
 - `error_analysis.json`: error breakdown (created by `analyze_errors.py`)
 - `deep_analysis.json`: deep analysis report (created by `deep_analyze.py`)
+
+**Saved Results**
+Precomputed runs are in `saved_results/`:
+- `saved_results/public1`: 94.9% accuracy (949/1000)
+- `saved_results/public2`: 94.4% accuracy (944/1000)
+- `saved_results/private`: 93.7% accuracy (937/1000)
+
+Final result (public test): **94.4% accuracy (944/1000)** from `saved_results/public2`.
