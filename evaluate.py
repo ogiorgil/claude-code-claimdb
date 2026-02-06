@@ -104,7 +104,32 @@ def evaluate(preds, gt):
 
     if not matched:
         print("No matching claim_ids found between predictions and ground truth.")
-        return None
+        if not gt:
+            print("No ground-truth labels loaded.")
+        labels = sorted(VALID_LABELS)
+        results = {
+            "overall": {
+                "total": 0,
+                "correct": 0,
+                "accuracy": 0.0,
+                "parse_errors": 0,
+                "missing_predictions": len(missing),
+                "extra_predictions": len(extra),
+            },
+            "per_label": {},
+            "per_category": {},
+            "per_database": {},
+            "confusion_matrix": {
+                actual: {predicted: 0 for predicted in labels} for actual in labels
+            },
+            "correct": [],
+            "wrong": [],
+        }
+        if missing:
+            print(f"\nMissing predictions for {len(missing)} claims")
+        if extra:
+            print(f"Extra predictions not in ground truth: {len(extra)}")
+        return results
 
     correct = sum(1 for m in matched if m["predicted"] == m["actual"])
     total = len(matched)
@@ -194,30 +219,39 @@ def main():
     details_dir = predictions_path.parent / "details"
     total_cost = 0
     total_duration = 0
+    total_input_tokens = 0
+    total_output_tokens = 0
     if details_dir.exists():
         for detail_file in details_dir.glob("*.json"):
             with open(detail_file) as f:
                 detail = json.load(f)
-            total_cost += detail.get("usage", {}).get("cost_usd", 0)
+            usage = detail.get("usage", {})
+            total_cost += usage.get("cost_usd", 0)
             total_duration += detail.get("duration_seconds", 0)
+            total_input_tokens += usage.get("input_tokens", 0)
+            total_output_tokens += usage.get("output_tokens", 0)
 
     results = evaluate(preds, gt)
 
-    if results:
-        results["cost"] = {
-            "total_usd": round(total_cost, 4),
-            "total_duration_seconds": round(total_duration, 1),
-            "avg_duration_seconds": round(total_duration / len(preds), 1) if preds else 0,
-        }
-        print(f"\n--- Cost ---")
-        print(f"Total cost: ${total_cost:.4f}")
-        print(f"Total duration: {total_duration:.0f}s ({total_duration/3600:.1f}h)")
-        print(f"Avg per claim: {total_duration/len(preds):.1f}s" if preds else "")
+    results["cost"] = {
+        "total_usd": round(total_cost, 4),
+        "total_duration_seconds": round(total_duration, 1),
+        "avg_duration_seconds": round(total_duration / len(preds), 1) if preds else 0,
+        "total_input_tokens": total_input_tokens,
+        "total_output_tokens": total_output_tokens,
+        "total_tokens": total_input_tokens + total_output_tokens,
+    }
+    print(f"\n--- Cost ---")
+    print(f"Total cost: ${total_cost:.4f}")
+    print(f"Total tokens: {total_input_tokens + total_output_tokens} "
+          f"(input {total_input_tokens}, output {total_output_tokens})")
+    print(f"Total duration: {total_duration:.0f}s ({total_duration/3600:.1f}h)")
+    print(f"Avg per claim: {total_duration/len(preds):.1f}s" if preds else "")
 
-        output_path = predictions_path.parent / "evaluate.json"
-        with open(output_path, "w") as f:
-            json.dump(results, f, indent=2)
-        print(f"\nSaved to: {output_path}")
+    output_path = predictions_path.parent / "evaluate.json"
+    with open(output_path, "w") as f:
+        json.dump(results, f, indent=2)
+    print(f"\nSaved to: {output_path}")
 
 
 if __name__ == "__main__":
