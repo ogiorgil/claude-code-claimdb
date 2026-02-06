@@ -190,9 +190,30 @@ def main():
     gt = load_ground_truth(GROUND_TRUTH_PATH)
     print(f"Loaded {len(gt)} ground-truth labels from {GROUND_TRUTH_PATH}")
 
+    # Compute total cost from detail files
+    details_dir = predictions_path.parent / "details"
+    total_cost = 0
+    total_duration = 0
+    if details_dir.exists():
+        for detail_file in details_dir.glob("*.json"):
+            with open(detail_file) as f:
+                detail = json.load(f)
+            total_cost += detail.get("usage", {}).get("cost_usd", 0)
+            total_duration += detail.get("duration_seconds", 0)
+
     results = evaluate(preds, gt)
 
     if results:
+        results["cost"] = {
+            "total_usd": round(total_cost, 4),
+            "total_duration_seconds": round(total_duration, 1),
+            "avg_duration_seconds": round(total_duration / len(preds), 1) if preds else 0,
+        }
+        print(f"\n--- Cost ---")
+        print(f"Total cost: ${total_cost:.4f}")
+        print(f"Total duration: {total_duration:.0f}s ({total_duration/3600:.1f}h)")
+        print(f"Avg per claim: {total_duration/len(preds):.1f}s" if preds else "")
+
         output_path = predictions_path.parent / "evaluate.json"
         with open(output_path, "w") as f:
             json.dump(results, f, indent=2)
