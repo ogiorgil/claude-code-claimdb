@@ -12,7 +12,9 @@ import json
 import os
 import re
 import subprocess
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 
@@ -111,6 +113,12 @@ def parse_args():
         type=int,
         default=-1,
         help="End index in claims list, -1 for all (default: -1)",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Number of parallel workers (default: 1)",
     )
     return parser.parse_args()
 
@@ -437,21 +445,15 @@ def main():
     total_cost = 0
     completed = len(done_ids)
     errors = 0
+    write_lock = threading.Lock()
 
-    try:
-        for i, claim in enumerate(claims):
-            if claim["claim_id"] in done_ids:
-                continue
+    pending_claims = [c for c in claims if c["claim_id"] not in done_ids]
+    print(f"Processing {len(pending_claims)} claims with {args.workers} worker(s)")
 
-            remaining = len(claims) - completed
-            print(
-                f"\n[{completed + 1}/{len(claims)}] Claim {claim['claim_id']} "
-                f"(db: {claim['db_name']}, remaining: {remaining})"
-            )
-
-            result = process_claim(claim, args)
-
-            append_prediction(output_dir, claim["claim_id"], result["predicted_label"])
+    def handle_result(result):
+        nonlocal total_cost, completed, errors
+        with write_lock:
+            append_prediction(output_dir, result["claim_id"], result["predicted_label"])
             save_detailed(output_dir, result)
 
             cost = result["usage"].get("cost_usd", 0)
@@ -460,12 +462,28 @@ def main():
 
             if result["predicted_label"] == "PARSE_ERROR":
                 errors += 1
-                print(f"  -> PARSE_ERROR: {result['reasoning'][:100]}")
+                print(f"  [{completed}/{len(claims)}] Claim {result['claim_id']} "
+                      f"-> PARSE_ERROR: {result['reasoning'][:100]}")
             else:
-                print(
-                    f"  -> {result['predicted_label']} "
-                    f"({result['duration_seconds']:.1f}s, ${cost:.4f})"
-                )
+                print(f"  [{completed}/{len(claims)}] Claim {result['claim_id']} "
+                      f"(db: {result['db_name']}) "
+                      f"-> {result['predicted_label']} "
+                      f"({result['duration_seconds']:.1f}s, ${cost:.4f})")
+
+    try:
+        if args.workers <= 1:
+            for claim in pending_claims:
+                result = process_claim(claim, args)
+                handle_result(result)
+        else:
+            with ThreadPoolExecutor(max_workers=args.workers) as executor:
+                futures = {
+                    executor.submit(process_claim, claim, args): claim
+                    for claim in pending_claims
+                }
+                for future in as_completed(futures):
+                    result = future.result()
+                    handle_result(result)
     except KeyboardInterrupt:
         print(f"\n\nInterrupted! Progress saved — re-run to resume.")
 
