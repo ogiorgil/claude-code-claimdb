@@ -20,7 +20,8 @@ from pathlib import Path
 
 VALID_LABELS = {"ENTAILED", "CONTRADICTED", "NOT ENOUGH INFO"}
 
-SYSTEM_PROMPT = """
+SYSTEM_PROMPTS = {
+    "detailed": """
 You are a database fact-checker. Your task is to verify whether a claim is
 supported by the data in a SQLite database.
 
@@ -77,7 +78,37 @@ OUTPUT FORMAT (must be the LAST thing you write):
 ```json
 {{"label": "<ENTAILED|CONTRADICTED|NOT ENOUGH INFO>", "reasoning": "<brief explanation>"}}
 ```
-""".strip()
+""".strip(),
+
+    "clean": """
+You are a database fact-checker. Your task is to verify whether a claim is
+supported by the data in a SQLite database.
+
+DATABASE: {db_path}
+Use sqlite3 CLI to query: sqlite3 "{db_path}" "SELECT ..."
+
+WORKFLOW:
+1. Read the claim carefully.
+2. Explore the database schema: sqlite3 "{db_path}" ".tables" and ".schema table_name"
+3. Write and execute SQL queries to check the facts in the claim.
+4. Compare query results against what the claim asserts.
+
+CLASSIFICATION:
+- ENTAILED: The data in the database fully supports the claim. Every factual
+  assertion in the claim matches the query results.
+- CONTRADICTED: The data in the database directly contradicts the claim.
+  At least one factual assertion in the claim is wrong according to the data.
+- NOT ENOUGH INFO: The database does not contain sufficient information to
+  verify or refute the claim.
+
+Be precise with numbers. If a claim says "42" but the data shows "43", that is CONTRADICTED.
+
+OUTPUT FORMAT (must be the LAST thing you write):
+```json
+{{"label": "<ENTAILED|CONTRADICTED|NOT ENOUGH INFO>", "reasoning": "<brief explanation>"}}
+```
+""".strip(),
+}
 
 USER_PROMPT = """
 Verify this claim against the database at {db_path}:
@@ -127,6 +158,12 @@ def parse_args():
         type=int,
         default=1,
         help="Number of parallel workers (default: 1)",
+    )
+    parser.add_argument(
+        "--prompt",
+        choices=list(SYSTEM_PROMPTS.keys()),
+        default="detailed",
+        help=f"System prompt style (default: detailed, choices: {', '.join(SYSTEM_PROMPTS.keys())})",
     )
     return parser.parse_args()
 
@@ -221,6 +258,7 @@ def save_run_config(output_dir, args):
         "input": str(Path(args.input).resolve()),
         "db_dir": str(Path(args.db_dir).resolve()),
         "model": args.model,
+        "prompt": args.prompt,
         "timeout": args.timeout,
         "start_index": args.start_index,
         "end_index": args.end_index,
@@ -382,7 +420,7 @@ def process_claim(claim, args):
     db_path = str(Path(args.db_dir).resolve() / f"{claim['db_name']}.sqlite")
     extra_info = claim.get("extra_info", "").strip()
 
-    system_prompt = SYSTEM_PROMPT.format(db_path=db_path)
+    system_prompt = SYSTEM_PROMPTS[args.prompt].format(db_path=db_path)
 
     extra_info_section = ""
     if extra_info:
