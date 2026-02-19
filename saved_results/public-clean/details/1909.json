@@ -1,0 +1,244 @@
+{
+  "claim_id": 1909,
+  "db_name": "toxicology",
+  "claim": "Approximately 85.05% of bond_id entries correspond to single bonds.",
+  "extra_info": "single bond refers to bond_type = '-'; percentage = DIVIDE(SUM(bond_type = '-'), COUNT(bond_id)) as percentage",
+  "predicted_label": "ENTAILED",
+  "reasoning": "The percentage of bond_id entries with bond_type = '-' (single bonds) is approximately 85.0473%, which rounds to 85.05%, matching the claim.",
+  "messages": [
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_012s7VCEvXBJZywGR71ibqJa",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_0146JzP7jyHz1t6uz4AbD2vr",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claude-code-claimdb/test_dbs/toxicology.sqlite\" \".tables\""
+            },
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 3,
+          "cache_creation_input_tokens": 1026,
+          "cache_read_input_tokens": 15903,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 1026
+          },
+          "output_tokens": 27,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "4de11702-aa1c-4a6b-9257-33e45ae8e694",
+      "uuid": "e07fb4f3-68cf-443e-a740-113103472dd0"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_0146JzP7jyHz1t6uz4AbD2vr",
+            "type": "tool_result",
+            "content": "atom       bond       connected  molecule",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "4de11702-aa1c-4a6b-9257-33e45ae8e694",
+      "uuid": "17aef716-21b8-41ee-9c20-e2fe1728a697",
+      "tool_use_result": {
+        "stdout": "atom       bond       connected  molecule",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false,
+        "noOutputExpected": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_012s7VCEvXBJZywGR71ibqJa",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01V72v4HruJBZDhN6ezMzWSS",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claude-code-claimdb/test_dbs/toxicology.sqlite\" \".schema bond\""
+            },
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 3,
+          "cache_creation_input_tokens": 1026,
+          "cache_read_input_tokens": 15903,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 1026
+          },
+          "output_tokens": 27,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "4de11702-aa1c-4a6b-9257-33e45ae8e694",
+      "uuid": "ed147f65-9b4c-4b2f-b9e2-34f5886f8ffd"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01V72v4HruJBZDhN6ezMzWSS",
+            "type": "tool_result",
+            "content": "CREATE TABLE `bond` (\n  `bond_id` TEXT NOT NULL,\n  `molecule_id` TEXT DEFAULT NULL,\n  `bond_type` TEXT DEFAULT NULL,\n  PRIMARY KEY (`bond_id`),\n  FOREIGN KEY (`molecule_id`) REFERENCES `molecule` (`molecule_id`)\n);",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "4de11702-aa1c-4a6b-9257-33e45ae8e694",
+      "uuid": "8fe6b559-7a55-418a-a8b5-310a18938322",
+      "tool_use_result": {
+        "stdout": "CREATE TABLE `bond` (\n  `bond_id` TEXT NOT NULL,\n  `molecule_id` TEXT DEFAULT NULL,\n  `bond_type` TEXT DEFAULT NULL,\n  PRIMARY KEY (`bond_id`),\n  FOREIGN KEY (`molecule_id`) REFERENCES `molecule` (`molecule_id`)\n);",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false,
+        "noOutputExpected": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_0141AUhTA89jpq7qmU8e6ihH",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01D6WKfBz9tcU8HbZU2P6kPp",
+            "name": "Bash",
+            "input": {
+              "command": "sqlite3 \"/Users/david/workspace/claude-code-claimdb/test_dbs/toxicology.sqlite\" \"SELECT CAST(SUM(CASE WHEN bond_type = '-' THEN 1 ELSE 0 END) AS REAL) * 100.0 / COUNT(bond_id) AS percentage FROM bond;\""
+            },
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 292,
+          "cache_read_input_tokens": 16929,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 292
+          },
+          "output_tokens": 19,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "4de11702-aa1c-4a6b-9257-33e45ae8e694",
+      "uuid": "7a991666-b7b2-45c5-9811-d9cf56d7754c"
+    },
+    {
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "tool_use_id": "toolu_01D6WKfBz9tcU8HbZU2P6kPp",
+            "type": "tool_result",
+            "content": "85.0472574521367",
+            "is_error": false
+          }
+        ]
+      },
+      "parent_tool_use_id": null,
+      "session_id": "4de11702-aa1c-4a6b-9257-33e45ae8e694",
+      "uuid": "c026a07c-303f-4c85-aa24-6eccd35c07f6",
+      "tool_use_result": {
+        "stdout": "85.0472574521367",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false,
+        "noOutputExpected": false
+      }
+    },
+    {
+      "type": "assistant",
+      "message": {
+        "model": "claude-opus-4-6",
+        "id": "msg_01NkTUKgZS3siW1qHSq9uLuw",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "The query returns approximately **85.05%** (85.0473...%), which rounds to 85.05%.\n\n```json\n{\"label\": \"ENTAILED\", \"reasoning\": \"The percentage of bond_id entries with bond_type = '-' (single bonds) is approximately 85.0473%, which rounds to 85.05%, matching the claim.\"}\n```"
+          }
+        ],
+        "stop_reason": null,
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 1,
+          "cache_creation_input_tokens": 151,
+          "cache_read_input_tokens": 17221,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 151
+          },
+          "output_tokens": 2,
+          "service_tier": "standard",
+          "inference_geo": "not_available"
+        },
+        "context_management": null
+      },
+      "parent_tool_use_id": null,
+      "session_id": "4de11702-aa1c-4a6b-9257-33e45ae8e694",
+      "uuid": "fa1fdf74-52a4-47a8-8f20-6f65e003617f"
+    }
+  ],
+  "usage": {
+    "input_tokens": 5,
+    "output_tokens": 368,
+    "cache_read_tokens": 50053,
+    "cache_creation_tokens": 1469,
+    "cost_usd": 0.047118749999999994
+  },
+  "duration_seconds": 11.91,
+  "success": true
+}

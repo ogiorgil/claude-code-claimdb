@@ -78,8 +78,9 @@ Each run writes to `results/<run_name>/`:
 
 **Saved Results**
 Precomputed runs are in `saved_results/`:
-- `saved_results/public1`: 94.9% accuracy (949/1000)
-- `saved_results/public2`: 94.4% accuracy (944/1000)
-- `saved_results/private`: 93.7% accuracy (937/1000)
+- `saved_results/public1`: 94.9% accuracy (949/1000) — detailed prompt, with rerun of wrong claims
+- `saved_results/public2`: 94.4% accuracy (944/1000) — detailed prompt, clean full run
+- `saved_results/public-clean`: 87.0% accuracy (870/1000) — minimal prompt with no task-specific guidance
+- `saved_results/private`: 93.7% accuracy (937/1000) — detailed prompt, private test set
 
 Final result (public test): **94.4% accuracy (944/1000)** from `saved_results/public2`.
